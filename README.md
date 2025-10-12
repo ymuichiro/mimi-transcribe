@@ -6,16 +6,18 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 
 - [MimiTranscribe — Japanese Audio Transcriber](#mimitranscribe--japanese-audio-transcriber)
   - [Key Features](#key-features)
-  - [Prerequisites](#prerequisites)
-  - [How to Use](#how-to-use)
+  - [Quick Start (For Users)](#quick-start-for-users)
+  - [Prerequisites (For Developers)](#prerequisites-for-developers)
+  - [How to Use (For Developers)](#how-to-use-for-developers)
   - [Standalone Bundle with PyInstaller](#standalone-bundle-with-pyinstaller)
     - [Automatic Release with GitHub Actions](#automatic-release-with-github-actions)
     - [PyInstaller Setup Notes](#pyinstaller-setup-notes)
   - [About the Model](#about-the-model)
 - [MimiTranscribe (日本語 README)](#mimitranscribe-日本語-readme)
   - [主な機能](#主な機能)
-  - [必要要件](#必要要件)
-  - [使い方](#使い方)
+  - [クイックスタート（ユーザー向け）](#クイックスタートユーザー向け)
+  - [必要要件（開発者向け）](#必要要件開発者向け)
+  - [使い方（開発者向け）](#使い方開発者向け)
   - [PyInstaller によるスタンドアロンバンドル](#pyinstaller-によるスタンドアロンバンドル)
     - [GitHub Actions での自動リリース](#github-actions-での自動リリース)
     - [PyInstaller セットアップのポイント](#pyinstaller-セットアップのポイント)
@@ -34,7 +36,45 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 
 ---
 
-## Prerequisites
+## Quick Start (For Users)
+
+If you just want to use the application, download the pre-built package from the [Releases page](https://github.com/ymuichiro/parakeet-tdt-ui/releases).
+
+### Download and Setup
+
+1. **Download** the latest release file:
+   - Go to the [Releases page](https://github.com/ymuichiro/parakeet-tdt-ui/releases)
+   - Download `mimitranscribe-macos-arm64.zip` or `mimitranscribe-macos-arm64.dmg` (for Apple Silicon Macs)
+
+2. **Extract** the downloaded file:
+   - **For ZIP**: Double-click the `.zip` file in Finder to extract it, then `MimiTranscribe.app` will appear
+   - **For DMG**: Double-click the `.dmg` file to mount it, then drag `MimiTranscribe.app` to your Applications folder
+
+3. **Launch** the application:
+   - Double-click `MimiTranscribe.app` to launch the application
+   - *Alternative: Right-click `MimiTranscribe.app` and select **Open** if double-clicking doesn't work*
+
+4. **Allow the app to run** (first launch only):
+   - macOS may show a security warning: *"MimiTranscribe.app cannot be opened because it is from an unidentified developer"*
+   - If this happens:
+     - Open **System Settings** > **Privacy & Security**
+     - Scroll down and click **Open Anyway** next to the blocked app message
+     - Click **Open** in the confirmation dialog
+
+5. **Grant microphone permission** (first launch only):
+   - When you first start recording, macOS will ask for permission to use the microphone
+   - Click **OK** to allow microphone access
+
+6. **Start using the app**:
+   - Press the **Start Recording** button to begin recording
+   - Press it again to stop recording and start transcription
+   - The transcription result will appear in the central text view
+
+*Note: The first launch may take some time as the AI model is downloaded (approximately 1-2GB).*
+
+---
+
+## Prerequisites (For Developers)
 
 - **macOS 14 or later** / **Apple Silicon** is recommended
 - **Python 3.13**
@@ -43,7 +83,9 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 
 ---
 
-## How to Use
+## How to Use (For Developers)
+
+If you want to build and run the application from source:
 
 1. Set up the dependencies.
 
@@ -134,14 +176,52 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 - **書き起こし履歴**: セッション内に複数の書き起こし結果を保存し、選択するだけで結果を再表示。コンテキストメニューからコピーや削除が可能です。
 - **エクスポート**: 生成テキストをワンクリックでクリップボードにコピー、またはファイルとして保存できます。
 
-## 必要要件
+## クイックスタート（ユーザー向け）
+
+アプリケーションをすぐに使いたい場合は、[リリースページ](https://github.com/ymuichiro/parakeet-tdt-ui/releases)からビルド済みパッケージをダウンロードしてください。
+
+### ダウンロードとセットアップ
+
+1. **ダウンロード**: 最新リリースファイルを取得します
+   - [リリースページ](https://github.com/ymuichiro/parakeet-tdt-ui/releases)にアクセス
+   - `mimitranscribe-macos-arm64.zip` または `mimitranscribe-macos-arm64.dmg` をダウンロード（Apple Silicon Mac 用）
+
+2. **展開**: ダウンロードしたファイルを展開します
+   - **ZIP の場合**: Finder で `.zip` ファイルをダブルクリックして展開すると `MimiTranscribe.app` が表示されます
+   - **DMG の場合**: `.dmg` ファイルをダブルクリックしてマウントし、`MimiTranscribe.app` をアプリケーションフォルダにドラッグ
+
+3. **起動**: アプリケーションを起動します
+   - `MimiTranscribe.app` をダブルクリックして起動
+   - *別の方法: ダブルクリックで起動しない場合は、`MimiTranscribe.app` を右クリックして **開く** を選択*
+
+4. **アプリの実行を許可**（初回起動時のみ）:
+   - macOS がセキュリティ警告を表示する場合があります：*「"MimiTranscribe.app" は開発元が未確認のため開けません」*
+   - この警告が表示された場合:
+     - **システム設定** > **プライバシーとセキュリティ** を開く
+     - 下にスクロールして、ブロックされたアプリのメッセージの横にある **このまま開く** をクリック
+     - 確認ダイアログで **開く** をクリック
+
+5. **マイク使用許可の付与**（初回録音時のみ）:
+   - 初めて録音を開始すると、macOS がマイク使用許可を求めます
+   - **OK** をクリックしてマイクアクセスを許可
+
+6. **アプリを使い始める**:
+   - **録音開始** ボタンを押して録音を開始
+   - もう一度押すと録音が停止し、書き起こしが開始されます
+   - 書き起こし結果は中央のテキストビューに表示されます
+
+*注意: 初回起動時は AI モデルのダウンロード（約 1～2GB）のため時間がかかる場合があります。*
+
+## 必要要件（開発者向け）
 
 - macOS 14 以降 / Apple Silicon を推奨
 - Python 3.13
 - [uv](https://github.com/astral-sh/uv)（依存解決用）
 - [ffmpeg](https://ffmpeg.org/)（録音・変換処理用）
 
-## 使い方
+## 使い方（開発者向け）
+
+ソースコードからアプリケーションをビルドして実行する場合:
 
 1. 依存関係をセットアップします。
 
