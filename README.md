@@ -1,8 +1,20 @@
 # parakeet-tdt-study
 
-`parakeet-mlx` をベースに、Python から直接モデルを呼び出す方法と、macOS 向けの簡易デスクトップアプリをまとめています。
+`parakeet-mlx` をベースに、Python から直接モデルを呼び出す方法と、macOS 向けのデスクトップアプリを提供しています。
 
 ## デスクトップアプリ（macOS）
+
+### SwiftUI ネイティブアプリ (推奨)
+
+macOS ネイティブの SwiftUI アプリケーションを `ParakeetTDT/` ディレクトリに用意しています。
+
+- **場所**: `ParakeetTDT/`
+- **詳細**: [ParakeetTDT/README.md](ParakeetTDT/README.md)
+- **セットアップ**: `./scripts/dev-setup.sh`
+
+SwiftUI + PythonKit を使用して既存の Python ロジックを活用しながら、ネイティブな macOS UI を提供します。
+
+### Python/Qt アプリ (従来版)
 
 ### 機能概要
 

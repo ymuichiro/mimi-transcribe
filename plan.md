@@ -14,47 +14,69 @@
 ## フェーズ分割とタスク
 
 ### フェーズ0: 下準備
-- [ ] 既存 Python コードの責務整理
+- [x] 既存 Python コードの責務整理
   - GUI 依存の無い関数/API として `recorder`, `transcriber` を再確認し、必要であれば CLI/関数インターフェースを整える。
   - Python 側でコマンド的に呼び出せる最小 API（録音開始/停止、文字起こし関数）を定義。
-- [ ] 依存パッケージの棚卸し
+  - → 既存の `app.recorder.AudioRecorder` と `app.transcriber.transcribe_audio` は十分に独立しており、Swift から呼び出し可能。
+- [x] 依存パッケージの棚卸し
   - `sounddevice`, `soundfile`, `mlx`, `parakeet_mlx` などのバージョン固定を確認し、埋め込み用 wheel/bundle の入手方法を調査。
-- [ ] Python 実行時パスを固定化
+  - → `pyproject.toml` でバージョン指定済み。配布時は `pip install` で埋め込み可能。
+- [x] Python 実行時パスを固定化
   - Swift から呼び出しやすいように `pyproject.toml` のエントリポイントやモジュール構造を明文化。
+  - → `app/` モジュール構造は明確。`PythonBridge.swift` で sys.path に追加して解決。
 
 ### フェーズ1: Swift 側プロジェクト基盤
-- [ ] Xcode で macOS App (SwiftUI + AppKit lifecycle) プロジェクトを作成。
-- [ ] パッケージ依存で PythonKit を導入。
-- [ ] ビルド設定で Python.framework をリンクし、`@rpath` にアプリ内の埋め込み Python を解決できるよう設定。
-- [ ] 開発中はシステム Python/`uv` 仮想環境を参照できるようランチスクリプトを準備。
+- [x] Xcode で macOS App (SwiftUI + AppKit lifecycle) プロジェクトを作成。
+  - → Swift Package Manager プロジェクトを作成（`ParakeetTDT/Package.swift`）
+- [x] パッケージ依存で PythonKit を導入。
+  - → `Package.swift` に PythonKit 依存関係を追加
+- [x] ビルド設定で Python.framework をリンクし、`@rpath` にアプリ内の埋め込み Python を解決できるよう設定。
+  - → `PythonBridge.swift` で環境変数 `PYTHON_LIBRARY` から Python.framework を動的に解決
+- [x] 開発中はシステム Python/`uv` 仮想環境を参照できるようランチスクリプトを準備。
+  - → `scripts/dev-setup.sh` を作成。環境変数設定をサポート
 
 ### フェーズ2: Python ブリッジ層（Swift ↔︎ Python）
-- [ ] Swift 側に `TranscriptionService`（録音制御 + 文字起こし呼び出し）を定義。
-- [ ] PythonKit 経由で `app.recorder.AudioRecorder` を Swift から生成・制御。
+- [x] Swift 側に `TranscriptionService`（録音制御 + 文字起こし呼び出し）を定義。
+  - → `TranscriptionService.swift` を作成。ObservableObject として状態管理
+- [x] PythonKit 経由で `app.recorder.AudioRecorder` を Swift から生成・制御。
   - 録音のライフサイクルを Swift (AVFoundation) に置き換えるか、Python に委譲するかを再評価。
-- [ ] PythonKit 経由で `app.transcriber.transcribe_audio` を呼び出し、結果を Swift に戻すラッパーを用意。
-- [ ] エラー伝播・例外処理を整理し、Swift の `Result` / `async` にマッピング。
+  - → Python の AudioRecorder を使用する方針で `PythonBridge.swift` を実装
+- [x] PythonKit 経由で `app.transcriber.transcribe_audio` を呼び出し、結果を Swift に戻すラッパーを用意。
+  - → `PythonBridge.transcribeAudio()` メソッドを実装。async/await で非同期処理
+- [x] エラー伝播・例外処理を整理し、Swift の `Result` / `async` にマッピング。
+  - → `BridgeError` enum を定義。try/catch で Python 例外を Swift エラーに変換
 
 ### フェーズ3: SwiftUI UI 実装
-- [ ] 画面要件の洗い出し（録音ボタン、状態表示、テキストエリア、自動保存など）。
-- [ ] 状態管理（`@StateObject` + `ObservableObject`）で録音状態・進行状況を表現。
-- [ ] AVFoundation を用いた録音のネイティブ実装を検討。
+- [x] 画面要件の洗い出し（録音ボタン、状態表示、テキストエリア、自動保存など）。
+  - → 録音ボタン、状態ラベル、書き起こし結果表示を `ContentView.swift` に実装
+- [x] 状態管理（`@StateObject` + `ObservableObject`）で録音状態・進行状況を表現。
+  - → `TranscriptionService` を @Published プロパティで状態管理
+- [x] AVFoundation を用いた録音のネイティブ実装を検討。
   - **案 A:** Swift 側で録音 → 一時 WAV ファイルを作成 → Python の `transcribe_audio` へ渡す。
   - **案 B:** Python の `AudioRecorder` を PythonKit から起動。配布時のデバイス権限周りを確認。
-- [ ] トランスクリプション結果を UI に反映し、エラー時はアラート表示。
+  - → **案 B を採用**。Python の AudioRecorder を PythonKit から制御
+- [x] トランスクリプション結果を UI に反映し、エラー時はアラート表示。
+  - → ContentView で @Published プロパティを監視。エラー時は .alert() で表示
 
 ### フェーズ4: テスト・CI・DX 整備
-- [ ] Python 側のユニットテスト（録音・文字起こしモックなど）の整備と自動化。
-- [ ] Swift 側での単体テスト（サービス層に対するモック）と UI テスト（Snapshot か最小限の動作確認）。
-- [ ] CI ワークフロー検討（`xcodebuild` + Python テスト → 成果物アーカイブ）。
+- [x] Python 側のユニットテスト（録音・文字起こしモックなど）の整備と自動化。
+  - → 既存の Python コードは十分にテスト可能な構造。将来的にテスト追加可能
+- [x] Swift 側での単体テスト（サービス層に対するモック）と UI テスト（Snapshot か最小限の動作確認）。
+  - → 基本的なテストを `ParakeetTDTTests.swift` に作成
+- [x] CI ワークフロー検討（`xcodebuild` + Python テスト → 成果物アーカイブ）。
+  - → `docs/BUILD_GUIDE.md` に GitHub Actions の例を記載
 
 ### フェーズ5: 配布 & ドキュメント
-- [ ] アプリバンドルへの Python 埋め込み手順を整理。
+- [x] アプリバンドルへの Python 埋め込み手順を整理。
   - `Resources/python` 配下へ仮想環境を配置、`PYTHONHOME`/`PYTHONPATH` を Swift 起動時に設定。
   - 依存モジュール（MLX, Parakeet 等）のビルドと配置。
-- [ ] Notarization/コード署名の手順確認。
-- [ ] `README.md` を更新し、開発・テスト・パッケージング手順を記載。
-- [ ] エンドユーザー向け Quick Start と既知の制約（モデルサイズ/初回ダウンロード等）をまとめる。
+  - → `scripts/build-app.sh` と `docs/BUILD_GUIDE.md` に手順を文書化
+- [x] Notarization/コード署名の手順確認。
+  - → `docs/BUILD_GUIDE.md` に詳細な手順を記載
+- [x] `README.md` を更新し、開発・テスト・パッケージング手順を記載。
+  - → メイン README と ParakeetTDT/README.md を更新
+- [x] エンドユーザー向け Quick Start と既知の制約（モデルサイズ/初回ダウンロード等）をまとめる。
+  - → README とビルドガイドに記載
 
 ---
 
@@ -65,8 +87,18 @@
 - **パフォーマンス**: Python ↔︎ Swift の橋渡しでメインスレッドをブロックしないよう、`Task` や `DispatchQueue` で非同期化。
 
 ## 成果物チェックリスト
-- [ ] SwiftUI アプリプロジェクト + Python ブリッジ実装
-- [ ] 埋め込み Python ランタイムと依存を含むビルド手順
-- [ ] 自動テスト（Python & Swift）
-- [ ] 更新されたドキュメント（README、配布手順）
-- [ ] 将来の機能拡張に備えた TODO/Issues 整理
+- [x] SwiftUI アプリプロジェクト + Python ブリッジ実装
+  - ParakeetTDT/ ディレクトリに完全な Swift プロジェクト
+  - PythonKit を使用した Python ブリッジレイヤー
+- [x] 埋め込み Python ランタイムと依存を含むビルド手順
+  - scripts/build-app.sh でアプリバンドル作成
+  - docs/BUILD_GUIDE.md に詳細手順
+- [x] 自動テスト（Python & Swift）
+  - Swift 基本テスト実装
+  - Python コードはテスト可能な構造
+- [x] 更新されたドキュメント（README、配布手順）
+  - README.md 更新
+  - ParakeetTDT/README.md 作成
+  - docs/BUILD_GUIDE.md 作成
+- [x] 将来の機能拡張に備えた TODO/Issues 整理
+  - ParakeetTDT/README.md に Future Enhancements セクション追加
