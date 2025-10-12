@@ -44,19 +44,18 @@ If you just want to use the application, download the pre-built package from the
 
 1. **Download** the latest release file:
    - Go to the [Releases page](https://github.com/ymuichiro/parakeet-tdt-ui/releases)
-   - Download `parakeet-tdt-macos-arm64.zip` (for Apple Silicon Macs)
+   - Download `mimitranscribe-macos-arm64.zip` or `mimitranscribe-macos-arm64.dmg` (for Apple Silicon Macs)
 
-2. **Extract** the downloaded ZIP file:
-   - Double-click the downloaded `.zip` file in Finder to extract it
-   - A folder named `parakeet-tdt` will be created
+2. **Extract** the downloaded file:
+   - **For ZIP**: Double-click the `.zip` file in Finder to extract it, then `MimiTranscribe.app` will appear
+   - **For DMG**: Double-click the `.dmg` file to mount it, then drag `MimiTranscribe.app` to your Applications folder
 
 3. **Launch** the application:
-   - Open the `parakeet-tdt` folder
-   - Double-click the `parakeet-tdt` executable file to launch the application
-   - *Alternative: Right-click the `parakeet-tdt` file and select **Open** if double-clicking doesn't work*
+   - Double-click `MimiTranscribe.app` to launch the application
+   - *Alternative: Right-click `MimiTranscribe.app` and select **Open** if double-clicking doesn't work*
 
 4. **Allow the app to run** (first launch only):
-   - macOS may show a security warning: *"parakeet-tdt cannot be opened because it is from an unidentified developer"*
+   - macOS may show a security warning: *"MimiTranscribe.app cannot be opened because it is from an unidentified developer"*
    - If this happens:
      - Open **System Settings** > **Privacy & Security**
      - Scroll down and click **Open Anyway** next to the blocked app message
@@ -185,19 +184,18 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 
 1. **ダウンロード**: 最新リリースファイルを取得します
    - [リリースページ](https://github.com/ymuichiro/parakeet-tdt-ui/releases)にアクセス
-   - `parakeet-tdt-macos-arm64.zip` をダウンロード（Apple Silicon Mac 用）
+   - `mimitranscribe-macos-arm64.zip` または `mimitranscribe-macos-arm64.dmg` をダウンロード（Apple Silicon Mac 用）
 
-2. **展開**: ダウンロードした ZIP ファイルを展開します
-   - Finder でダウンロードした `.zip` ファイルをダブルクリック
-   - `parakeet-tdt` フォルダが作成されます
+2. **展開**: ダウンロードしたファイルを展開します
+   - **ZIP の場合**: Finder で `.zip` ファイルをダブルクリックして展開すると `MimiTranscribe.app` が表示されます
+   - **DMG の場合**: `.dmg` ファイルをダブルクリックしてマウントし、`MimiTranscribe.app` をアプリケーションフォルダにドラッグ
 
 3. **起動**: アプリケーションを起動します
-   - `parakeet-tdt` フォルダを開く
-   - `parakeet-tdt` 実行ファイルをダブルクリックして起動
-   - *別の方法: ダブルクリックで起動しない場合は、`parakeet-tdt` ファイルを右クリックして **開く** を選択*
+   - `MimiTranscribe.app` をダブルクリックして起動
+   - *別の方法: ダブルクリックで起動しない場合は、`MimiTranscribe.app` を右クリックして **開く** を選択*
 
 4. **アプリの実行を許可**（初回起動時のみ）:
-   - macOS がセキュリティ警告を表示する場合があります：*「"parakeet-tdt" は開発元が未確認のため開けません」*
+   - macOS がセキュリティ警告を表示する場合があります：*「"MimiTranscribe.app" は開発元が未確認のため開けません」*
    - この警告が表示された場合:
      - **システム設定** > **プライバシーとセキュリティ** を開く
      - 下にスクロールして、ブロックされたアプリのメッセージの横にある **このまま開く** をクリック
