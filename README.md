@@ -1,6 +1,128 @@
-# Parakeet TDT Transcriber
+# Parakeet TDT Transcriber for Japanese Audio
+
+This is a one-click desktop tool for **macOS** that handles everything from **microphone recording** and **inference** to **transcription history management**. It is designed to bundle the `parakeet-mlx` **Parakeet-TDT (0.6B) model** running on the **Apple MLX backend**, providing fast **local transcription for Japanese audio**.
+
+![](./assets/image.png)
+
+- [Parakeet TDT Transcriber for Japanese Audio](#parakeet-tdt-transcriber-for-japanese-audio)
+  - [Key Features](#key-features)
+  - [Prerequisites](#prerequisites)
+  - [How to Use](#how-to-use)
+  - [Standalone Bundle with PyInstaller](#standalone-bundle-with-pyinstaller)
+    - [Automatic Release with GitHub Actions](#automatic-release-with-github-actions)
+    - [PyInstaller Setup Notes](#pyinstaller-setup-notes)
+  - [About the Model](#about-the-model)
+- [Parakeet TDT Transcriber for Japanese Audio (日本語 README)](#parakeet-tdt-transcriber-for-japanese-audio-日本語-readme)
+  - [主な機能](#主な機能)
+  - [必要要件](#必要要件)
+  - [使い方](#使い方)
+  - [PyInstaller によるスタンドアロンバンドル](#pyinstaller-によるスタンドアロンバンドル)
+    - [GitHub Actions での自動リリース](#github-actions-での自動リリース)
+    - [PyInstaller セットアップのポイント](#pyinstaller-セットアップのポイント)
+  - [モデルについて](#モデルについて)
+
+---
+
+## Key Features
+
+- **One-Step Transcription**: A single button controls the entire process, from starting to stopping the recording and performing the inference. The header displays the elapsed time and processing status.
+- **Microphone Device Selection**: Available input devices are listed automatically and can be switched via a dropdown menu.
+- **Model Settings**: Easily toggle **FP32 mode** and **Local Attention** activation, or adjust the context window width via the GUI.
+- **Transcription History**: Multiple transcription results are saved within the session. You can re-display any result by simply selecting it from the history list. Results can be copied or deleted via the context menu.
+- **Export**: Generate text can be copied to the clipboard or saved as a file with a single click.
+
+---
+
+## Prerequisites
+
+- **macOS 14 or later** / **Apple Silicon** is recommended
+- **Python 3.13**
+- **[uv](https://github.com/astral-sh/uv)** (for dependency resolution)
+- **[ffmpeg](https://ffmpeg.org/)** (for recording and conversion)
+
+---
+
+## How to Use
+
+1. Set up the dependencies.
+
+```bash
+uv sync
+```
+
+2.  Start the application.
+
+```bash
+uv run python main.py
+```
+
+*The first time you run the app, macOS may ask for permission to use the microphone. Please grant permission to `uv` (Python) in **System Settings \> Privacy & Security \> Microphone**.*
+
+3.  Press the **Start Recording** button to begin recording. Press it again to stop, and transcription will start automatically.
+4.  The transcription result will appear in the central text view. The result is also added to the history list, and clicking on a different entry will re-display its content.
+5.  To use the result, click the **Copy** button or the **Save...** button on the right side of the header.
+
+-----
+
+## Standalone Bundle with PyInstaller
+
+You can use **PyInstaller** to create a single distribution package that includes the application, its dependent libraries, and the `ffmpeg` binary.
+
+1.  Install additional dependencies.
+
+    ```bash
+    uv sync --extra bundle
+    ```
+
+2.  Prepare a static **`ffmpeg` binary for macOS** and ensure the app can access it. Example:
+
+    ```bash
+    mkdir -p build/ffmpeg
+    curl -L -o build/ffmpeg/ffmpeg.zip [https://evermeet.cx/ffmpeg/getrelease/zip](https://evermeet.cx/ffmpeg/getrelease/zip)
+    unzip -o build/ffmpeg/ffmpeg.zip -d build/ffmpeg
+    chmod +x build/ffmpeg/ffmpeg
+    ```
+
+    *If you want to use your existing Homebrew version, use the path obtained from `which ffmpeg`.*
+
+3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` in the generated package.
+
+    ```bash
+    PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
+    uv run pyinstaller build/pyinstaller/parakeet.spec
+    ```
+
+    The output will be generated in the `dist/parakeet-tdt` directory (the **`.app` bundle** and supporting files).
+
+4.  Check the generated files.
+
+      - Launch `dist/parakeet-tdt/parakeet-tdt.app` from Finder to confirm functionality.
+      - Verify that `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
+      - Before distribution, check that no unnecessary cache files (like `build/pyinstaller` or `.DS_Store`) have been included.
+
+### Automatic Release with GitHub Actions
+
+  - Pushing a new tag (a semantic version starting with `v*`) will trigger GitHub Actions to run the PyInstaller build on a macOS Runner, creating an `.app` bundle that includes the `ffmpeg` binary fetched from evermeet.cx.
+
+### PyInstaller Setup Notes
+
+  - If **`PARAKEET_FFMPEG_PATH`** is not specified, the application will fall back to the OS-installed `ffmpeg`. To ensure complete dependency freedom, you must set this variable.
+  - This setup assumes operation on **Apple Silicon macOS**. Distribution for Intel may require additional verification and code signing.
+
+-----
+
+## About the Model
+
+The application uses the **`mlx-community/parakeet-tdt_ctc-0.6b-ja`** model. Switching to other models is currently not supported due to considerations of accuracy and operational stability. The initial launch may take some time as the model 
+is downloaded.
+
+---
+
+# Parakeet TDT Transcriber for Japanese Audio (日本語 README)
 
 macOS 向けのデスクトップアプリとして、マイクからの録音・推論・書き起こし履歴の管理までをワンクリックで完結させるツールです。Apple MLX バックエンドで動作する `parakeet-mlx` Parakeet-TDT (0.6B) モデルを同梱前提で扱い、日本語音声の高速なローカル書き起こしをサポートします。
+
+![](./assets/image.png)
 
 ## 主な機能
 
@@ -58,7 +180,7 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
    chmod +x build/ffmpeg/ffmpeg
    ```
 
-   既存の Homebrew 版を利用する場合は `which ffmpeg` で得られるパスを使ってください。
+   ※ 既存の Homebrew 版を利用する場合は `which ffmpeg` で得られるパスを使ってください。
 
 3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
 
@@ -75,57 +197,15 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
    - `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
    - 配布前に不要なキャッシュ（`build/pyinstaller` や `.DS_Store` 等）が混入していないかを見直してください。
 
+### GitHub Actions での自動リリース
+
+- 新しいタグ（`v*` で始まるセマンティックバージョン）をプッシュすると、GitHub Actions が macOS Runner 上で PyInstaller ビルドを実行し、evermeet.cx から取得した `ffmpeg` を同梱した `.app` バンドルを作成します。
+
 ### PyInstaller セットアップのポイント
 
-- `build/pyinstaller/parakeet.spec` が標準化されたビルド定義です。`PySide6`、`parakeet_mlx`、`mlx`、`sounddevice` のデータ/ネイティブライブラリを自動収集します。
 - `PARAKEET_FFMPEG_PATH` を指定しなかった場合は OS にインストールされた `ffmpeg` へフォールバックします。完全に依存レスにしたい場合は必ず同変数を設定してください。
 - Apple Silicon macOS での動作を前提にしています。Intel 用に配布する場合は別途検証とコード署名が必要です。
-- PyInstaller のビルド後、`codesign` や `notarytool` で署名することで Gatekeeper の警告を抑制できます。
 
 ## モデルについて
 
 アプリケーションでは `mlx-community/parakeet-tdt_ctc-0.6b-ja` モデルを利用します。他モデルの切り替えは、精度と動作検証の観点で現時点ではサポートしていません。初回起動時はモデルのダウンロードに時間がかかる場合があります。
-
-## 技術メモ
-
-- GUI: Qt for Python (`PySide6`)
-- 録音: `sounddevice` + `soundfile`
-- モデル推論: `parakeet-mlx` (MLX backend)
-- バンドル: Nuitka スタンドアロンモード + PySide6 プラグイン
-- ログ: `~/Library/Logs/parakeet-tdt-study/` にセッションごとのログファイルを出力します。
-
-## 開発に参加するには
-
-Issue と Pull Request を歓迎します。バグ報告や改善アイデアがあれば [GitHub Issue](https://github.com/ymuichiro/parakeet-tdt-ui/issues) に投稿してください。PR では以下の点にご留意ください。
-
-- 新規機能は可能な範囲で自動テストまたは動作確認手順を添えてください。
-- UI 変更時はスクリーンショットや記述で差分が分かるようにしてください。
-- 依存関係を追加する際は、`pyproject.toml` と `uv.lock` を更新してください。
-
-## ライセンス
-
-本プロジェクトは [MIT License](LICENSE) の下で提供されます。
-
-## モデル API を直接利用したい場合
-
-```python
-from pathlib import Path
-
-import mlx.core as mx
-from parakeet_mlx import from_pretrained
-
-model = from_pretrained(
-    "mlx-community/parakeet-tdt_ctc-0.6b-ja",
-    dtype=mx.bfloat16,
-)
-
-result = model.transcribe(Path("audio.wav"), dtype=mx.bfloat16)
-print(result.text.strip())
-```
-
-長時間の音声では `chunk_duration` や `overlap_duration` を指定してチャンク処理を行ったり、`dtype=mx.float32` を指定して FP32 で計算することも可能です。ローカルアテンションを利用したい場合は、ロード後に下記を実行してください。
-
-```python
-model.encoder.set_attention_model("rel_pos_local_attn", (256, 256))
-```
-

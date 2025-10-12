@@ -1,0 +1,60 @@
+name: release-installer
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Sync dependencies
+        run: uv sync --extra bundle --locked
+
+      - name: Compile sources
+        run: uv run python -m compileall app
+
+      - name: Download ffmpeg binary
+        run: |
+          mkdir -p build/ffmpeg
+          curl -L -o build/ffmpeg/ffmpeg.zip https://evermeet.cx/ffmpeg/getrelease/zip
+          unzip -o build/ffmpeg/ffmpeg.zip -d build/ffmpeg
+          chmod +x build/ffmpeg/ffmpeg
+
+      - name: Build PyInstaller bundle
+        run: |
+          PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
+          uv run pyinstaller build/pyinstaller/parakeet.spec
+
+      - name: Archive installer
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent dist/parakeet-tdt parakeet-tdt-macos-arm64.zip
+          shasum -a 256 parakeet-tdt-macos-arm64.zip > parakeet-tdt-macos-arm64.zip.sha256
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: parakeet-tdt-macos-arm64
+          path: |
+            parakeet-tdt-macos-arm64.zip
+            parakeet-tdt-macos-arm64.zip.sha256
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            parakeet-tdt-macos-arm64.zip
+            parakeet-tdt-macos-arm64.zip.sha256
+          generate_release_notes: true
+          tag_name: ${{ github.ref_name }}
