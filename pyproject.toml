@@ -1,0 +1,12 @@
+[project]
+name = "parakeet-tdt-study"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "parakeet-mlx>=0.4.0",
+    "PySide6>=6.7.0",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+]
