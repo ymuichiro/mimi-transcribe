@@ -41,37 +41,37 @@ jobs:
 
       - name: Create macOS ZIP archive
         run: |
-          APP="dist/Parakeet TDT.app"
-          ditto -c -k --sequesterRsrc --keepParent "$APP" parakeet-tdt-macos-arm64.zip
-          shasum -a 256 parakeet-tdt-macos-arm64.zip > parakeet-tdt-macos-arm64.zip.sha256
+          APP="dist/MimiTranscribe.app"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" mimitranscribe-macos-arm64.zip
+          shasum -a 256 mimitranscribe-macos-arm64.zip > mimitranscribe-macos-arm64.zip.sha256
 
       - name: Create macOS DMG
         run: |
-          APP="dist/Parakeet TDT.app"
+          APP="dist/MimiTranscribe.app"
           STAGE="dist/dmg-stage"
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
           cp -R "$APP" "$STAGE/"
-          hdiutil create -volname "Parakeet TDT" -srcfolder "$STAGE" -format UDZO -ov parakeet-tdt-macos-arm64.dmg
-          shasum -a 256 parakeet-tdt-macos-arm64.dmg > parakeet-tdt-macos-arm64.dmg.sha256
+          hdiutil create -volname "MimiTranscribe" -srcfolder "$STAGE" -format UDZO -ov mimitranscribe-macos-arm64.dmg
+          shasum -a 256 mimitranscribe-macos-arm64.dmg > mimitranscribe-macos-arm64.dmg.sha256
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: parakeet-tdt-macos-arm64
+          name: mimitranscribe-macos-arm64
           path: |
-            parakeet-tdt-macos-arm64.zip
-            parakeet-tdt-macos-arm64.zip.sha256
-            parakeet-tdt-macos-arm64.dmg
-            parakeet-tdt-macos-arm64.dmg.sha256
+            mimitranscribe-macos-arm64.zip
+            mimitranscribe-macos-arm64.zip.sha256
+            mimitranscribe-macos-arm64.dmg
+            mimitranscribe-macos-arm64.dmg.sha256
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            parakeet-tdt-macos-arm64.zip
-            parakeet-tdt-macos-arm64.zip.sha256
-            parakeet-tdt-macos-arm64.dmg
-            parakeet-tdt-macos-arm64.dmg.sha256
+            mimitranscribe-macos-arm64.zip
+            mimitranscribe-macos-arm64.zip.sha256
+            mimitranscribe-macos-arm64.dmg
+            mimitranscribe-macos-arm64.dmg.sha256
           generate_release_notes: true
           tag_name: ${{ github.ref_name }}

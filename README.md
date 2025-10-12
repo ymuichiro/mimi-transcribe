@@ -1,10 +1,10 @@
-# Parakeet TDT Transcriber for Japanese Audio
+# MimiTranscribe — Japanese Audio Transcriber
 
 This is a one-click desktop tool for **macOS** that handles everything from **microphone recording** and **inference** to **transcription history management**. It is designed to bundle the `parakeet-mlx` **Parakeet-TDT (0.6B) model** running on the **Apple MLX backend**, providing fast **local transcription for Japanese audio**.
 
 ![](./assets/image.png)
 
-- [Parakeet TDT Transcriber for Japanese Audio](#parakeet-tdt-transcriber-for-japanese-audio)
+- [MimiTranscribe — Japanese Audio Transcriber](#mimitranscribe--japanese-audio-transcriber)
   - [Key Features](#key-features)
   - [Prerequisites](#prerequisites)
   - [How to Use](#how-to-use)
@@ -12,7 +12,7 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
     - [Automatic Release with GitHub Actions](#automatic-release-with-github-actions)
     - [PyInstaller Setup Notes](#pyinstaller-setup-notes)
   - [About the Model](#about-the-model)
-- [Parakeet TDT Transcriber for Japanese Audio (日本語 README)](#parakeet-tdt-transcriber-for-japanese-audio-日本語-readme)
+- [MimiTranscribe (日本語 README)](#mimitranscribe-日本語-readme)
   - [主な機能](#主な機能)
   - [必要要件](#必要要件)
   - [使い方](#使い方)
@@ -26,6 +26,7 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 ## Key Features
 
 - **One-Step Transcription**: A single button controls the entire process, from starting to stopping the recording and performing the inference. The header displays the elapsed time and processing status.
+- **Live Waveform Monitor**: Visualize microphone input levels in real time while recording so you can confirm that audio is being captured.
 - **Microphone Device Selection**: Available input devices are listed automatically and can be switched via a dropdown menu.
 - **Model Settings**: Easily toggle **FP32 mode** and **Local Attention** activation, or adjust the context window width via the GUI.
 - **Transcription History**: Multiple transcription results are saved within the session. You can re-display any result by simply selecting it from the history list. Results can be copied or deleted via the context menu.
@@ -85,24 +86,24 @@ You can use **PyInstaller** to create a single distribution package that include
 
     *If you want to use your existing Homebrew version, use the path obtained from `which ffmpeg`.*
 
-3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` in the generated package.
+3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `MimiTranscribe.app/Contents/MacOS/bin/ffmpeg` in the generated package.
 
     ```bash
   PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
     ```
 
-    The build outputs will appear under `dist/`, containing the **`Parakeet TDT.app` bundle** alongside the unpacked `parakeet-tdt` support directory.
+    The build outputs will appear under `dist/`, containing the **`MimiTranscribe.app` bundle** alongside the unpacked `mimitranscribe` support directory.
 
 4.  Check the generated files.
 
-      - Launch `dist/Parakeet TDT.app` from Finder to confirm functionality.
-      - Verify that `dist/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
+      - Launch `dist/MimiTranscribe.app` from Finder to confirm functionality.
+      - Verify that `dist/MimiTranscribe.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
       - Before distribution, check that no unnecessary cache files (like `build/` artifacts or `.DS_Store`) have been included.
 
 ### Automatic Release with GitHub Actions
 
-  - Pushing a new tag (a semantic version starting with `v*`) will trigger GitHub Actions to run the PyInstaller build on a macOS Runner, creating a `.zip` and `.dmg` that contain `Parakeet TDT.app` bundled with the `ffmpeg` binary fetched from evermeet.cx. (The artifacts are **not code-signed**; Gatekeeper will show a warning the first time.)
+  - Pushing a new tag (a semantic version starting with `v*`) will trigger GitHub Actions to run the PyInstaller build on a macOS Runner, creating a `.zip` and `.dmg` that contain `MimiTranscribe.app` bundled with the `ffmpeg` binary fetched from evermeet.cx. (The artifacts are **not code-signed**; Gatekeeper will show a warning the first time.)
 
 ### PyInstaller Setup Notes
 
@@ -118,7 +119,7 @@ is downloaded.
 
 ---
 
-# Parakeet TDT Transcriber for Japanese Audio (日本語 README)
+# MimiTranscribe (日本語 README)
 
 macOS 向けのデスクトップアプリとして、マイクからの録音・推論・書き起こし履歴の管理までをワンクリックで完結させるツールです。Apple MLX バックエンドで動作する `parakeet-mlx` Parakeet-TDT (0.6B) モデルを同梱前提で扱い、日本語音声の高速なローカル書き起こしをサポートします。
 
@@ -127,6 +128,7 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 ## 主な機能
 
 - **ワンステップ書き起こし**: 録音開始から停止・推論までを 1 つのボタンで操作。経過時間と処理状況をヘッダーに表示します。
+- **リアルタイム波形モニタ**: 録音中のマイク入力レベルを波形で表示し、音声が取り込まれていることを視覚的に確認できます。
 - **マイクデバイス選択**: 利用可能な入力デバイスを自動列挙し、ドロップダウンから切り替えられます。
 - **モデル設定**: FP32 モードやローカルアテンションの有効化／コンテキスト幅の調整を GUI で切り替え。
 - **書き起こし履歴**: セッション内に複数の書き起こし結果を保存し、選択するだけで結果を再表示。コンテキストメニューからコピーや削除が可能です。
@@ -182,24 +184,24 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 
    ※ 既存の Homebrew 版を利用する場合は `which ffmpeg` で得られるパスを使ってください。
 
-3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
+3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `MimiTranscribe.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
 
    ```bash
   PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
    ```
 
-  出力は `dist/` 配下に生成されます（`Parakeet TDT.app` バンドルと、サポート用の `parakeet-tdt` ディレクトリが含まれます）。
+  出力は `dist/` 配下に生成されます（`MimiTranscribe.app` バンドルと、サポート用の `mimitranscribe` ディレクトリが含まれます）。
 
 4. 生成物をチェックします。
 
-  - `dist/Parakeet TDT.app` を Finder から起動して動作確認します。
-  - `dist/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
+  - `dist/MimiTranscribe.app` を Finder から起動して動作確認します。
+  - `dist/MimiTranscribe.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
   - 配布前に不要なキャッシュ（`build/` 配下の生成物や `.DS_Store` 等）が混入していないかを見直してください。
 
 ### GitHub Actions での自動リリース
 
-- 新しいタグ（`v*` で始まるセマンティックバージョン）をプッシュすると、GitHub Actions が macOS Runner 上で PyInstaller ビルドを実行し、evermeet.cx から取得した `ffmpeg` を同梱した `Parakeet TDT.app` を ZIP と DMG にまとめて生成します（現状はコード署名されないため、初回起動時に Gatekeeper に警告される点に注意してください）。
+- 新しいタグ（`v*` で始まるセマンティックバージョン）をプッシュすると、GitHub Actions が macOS Runner 上で PyInstaller ビルドを実行し、evermeet.cx から取得した `ffmpeg` を同梱した `MimiTranscribe.app` を ZIP と DMG にまとめて生成します（現状はコード署名されないため、初回起動時に Gatekeeper に警告される点に注意してください）。
 
 ### PyInstaller セットアップのポイント
 

@@ -1,7 +1,7 @@
 [project]
-name = "parakeet-tdt-study"
+name = "mimitranscribe"
 version = "0.1.0"
-description = "Desktop transcription app powered by Parakeet-TDT and PySide6"
+description = "MimiTranscribe: local Japanese transcription app powered by Parakeet-TDT and PySide6"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -19,7 +19,7 @@ bundle = [
 ]
 
 [project.scripts]
-parakeet-tdt = "main:main"
+mimitranscribe = "main:main"
 
 [project.license]
 file = "LICENSE"

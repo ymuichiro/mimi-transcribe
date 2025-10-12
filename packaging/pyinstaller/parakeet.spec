@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec file for Parakeet TDT Transcriber.
+"""PyInstaller spec file for MimiTranscribe.
 
 Usage:
     PARAKEET_FFMPEG_PATH=/absolute/path/to/ffmpeg \
@@ -27,7 +27,7 @@ from PyInstaller.utils.hooks import (
 _spec_path = Path(globals().get("__file__", sys.argv[0])).resolve()
 PROJECT_ROOT = _spec_path.parents[2]
 PACKAGE_ROOT = PROJECT_ROOT / "app"
-DIST_ROOT = PROJECT_ROOT / "dist" / "parakeet-tdt"
+DIST_ROOT = PROJECT_ROOT / "dist" / "mimtranscribe"
 WORK_ROOT = PROJECT_ROOT / "build" / "pyinstaller"
 
 distpath = str(DIST_ROOT)
@@ -106,7 +106,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="parakeet-tdt",
+    name="mimtranscribe",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -123,19 +123,19 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="parakeet-tdt",
+    name="mimtranscribe",
 )
 
 bundle = BUNDLE(
     exe,
     coll,
-    name="Parakeet TDT.app",
+    name="MimiTranscribe.app",
     icon=str(PROJECT_ROOT / "assets" / "icon.icns"),
-    bundle_identifier="com.parakeet.tdt",
+    bundle_identifier="com.mimitranscribe.app",
     info_plist={
-        "CFBundleDisplayName": "Parakeet TDT",
-        "CFBundleName": "Parakeet TDT",
-        "CFBundleExecutable": "parakeet-tdt",
+        "CFBundleDisplayName": "MimiTranscribe",
+        "CFBundleName": "MimiTranscribe",
+        "CFBundleExecutable": "mimtranscribe",
         "CFBundleVersion": APP_VERSION,
         "CFBundleShortVersionString": APP_VERSION,
         "LSMinimumSystemVersion": "14.0",
