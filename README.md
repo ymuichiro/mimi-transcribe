@@ -51,10 +51,11 @@ If you just want to use the application, download the pre-built package from the
 
 3. **Launch** the application:
    - Open the `parakeet-tdt` folder
-   - Double-click `parakeet-tdt.app` to launch the application
+   - Double-click the `parakeet-tdt` executable file to launch the application
+   - *Alternative: Right-click the `parakeet-tdt` file and select **Open** if double-clicking doesn't work*
 
 4. **Allow the app to run** (first launch only):
-   - macOS may show a security warning: *"parakeet-tdt.app cannot be opened because it is from an unidentified developer"*
+   - macOS may show a security warning: *"parakeet-tdt cannot be opened because it is from an unidentified developer"*
    - If this happens:
      - Open **System Settings** > **Privacy & Security**
      - Scroll down and click **Open Anyway** next to the blocked app message
@@ -190,10 +191,11 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 
 3. **起動**: アプリケーションを起動します
    - `parakeet-tdt` フォルダを開く
-   - `parakeet-tdt.app` をダブルクリックして起動
+   - `parakeet-tdt` 実行ファイルをダブルクリックして起動
+   - *別の方法: ダブルクリックで起動しない場合は、`parakeet-tdt` ファイルを右クリックして **開く** を選択*
 
 4. **アプリの実行を許可**（初回起動時のみ）:
-   - macOS がセキュリティ警告を表示する場合があります：*「"parakeet-tdt.app" は開発元が未確認のため開けません」*
+   - macOS がセキュリティ警告を表示する場合があります：*「"parakeet-tdt" は開発元が未確認のため開けません」*
    - この警告が表示された場合:
      - **システム設定** > **プライバシーとセキュリティ** を開く
      - 下にスクロールして、ブロックされたアプリのメッセージの横にある **このまま開く** をクリック
