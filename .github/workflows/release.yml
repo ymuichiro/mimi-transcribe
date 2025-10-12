@@ -35,7 +35,7 @@ jobs:
       - name: Build PyInstaller bundle
         run: |
           PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
-          uv run pyinstaller build/pyinstaller/parakeet.spec
+          uv run pyinstaller packaging/pyinstaller/parakeet.spec
 
       - name: Archive installer
         run: |

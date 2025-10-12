@@ -88,8 +88,8 @@ You can use **PyInstaller** to create a single distribution package that include
 3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` in the generated package.
 
     ```bash
-    PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
-    uv run pyinstaller build/pyinstaller/parakeet.spec
+  PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
+  uv run pyinstaller packaging/pyinstaller/parakeet.spec
     ```
 
     The output will be generated in the `dist/parakeet-tdt` directory (the **`.app` bundle** and supporting files).
@@ -98,7 +98,7 @@ You can use **PyInstaller** to create a single distribution package that include
 
       - Launch `dist/parakeet-tdt/parakeet-tdt.app` from Finder to confirm functionality.
       - Verify that `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
-      - Before distribution, check that no unnecessary cache files (like `build/pyinstaller` or `.DS_Store`) have been included.
+  - Before distribution, check that no unnecessary cache files (like `build/` artifacts or `.DS_Store`) have been included.
 
 ### Automatic Release with GitHub Actions
 
@@ -185,8 +185,8 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
 
    ```bash
-   PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
-   uv run pyinstaller build/pyinstaller/parakeet.spec
+  PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
+  uv run pyinstaller packaging/pyinstaller/parakeet.spec
    ```
 
    出力は `dist/parakeet-tdt` ディレクトリに生成されます（`.app` バンドルとサポートファイル）。
@@ -195,7 +195,7 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 
    - `dist/parakeet-tdt/parakeet-tdt.app` を Finder から起動して動作確認します。
    - `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
-   - 配布前に不要なキャッシュ（`build/pyinstaller` や `.DS_Store` 等）が混入していないかを見直してください。
+  - 配布前に不要なキャッシュ（`build/` 配下の生成物や `.DS_Store` 等）が混入していないかを見直してください。
 
 ### GitHub Actions での自動リリース
 
