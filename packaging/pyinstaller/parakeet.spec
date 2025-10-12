@@ -104,10 +104,8 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    exclude_binaries=False,
+    [],
+    exclude_binaries=True,
     name="parakeet-tdt",
     debug=False,
     bootloader_ignore_signals=False,
@@ -117,8 +115,20 @@ exe = EXE(
     icon=None,
 )
 
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name="parakeet-tdt",
+)
+
 bundle = BUNDLE(
     exe,
+    coll,
     name="Parakeet TDT.app",
     icon=str(PROJECT_ROOT / "assets" / "icon.icns"),
     bundle_identifier="com.parakeet.tdt",

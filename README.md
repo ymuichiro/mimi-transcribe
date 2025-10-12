@@ -92,12 +92,12 @@ You can use **PyInstaller** to create a single distribution package that include
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
     ```
 
-    The output will be generated in the `dist/parakeet-tdt` directory containing the **`Parakeet TDT.app` bundle**.
+    The build outputs will appear under `dist/`, containing the **`Parakeet TDT.app` bundle** alongside the unpacked `parakeet-tdt` support directory.
 
 4.  Check the generated files.
 
-      - Launch `dist/parakeet-tdt/Parakeet TDT.app` from Finder to confirm functionality.
-      - Verify that `dist/parakeet-tdt/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
+      - Launch `dist/Parakeet TDT.app` from Finder to confirm functionality.
+      - Verify that `dist/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
       - Before distribution, check that no unnecessary cache files (like `build/` artifacts or `.DS_Store`) have been included.
 
 ### Automatic Release with GitHub Actions
@@ -189,12 +189,12 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
    ```
 
-  出力は `dist/parakeet-tdt` ディレクトリに生成されます（`Parakeet TDT.app` バンドルが含まれます）。
+  出力は `dist/` 配下に生成されます（`Parakeet TDT.app` バンドルと、サポート用の `parakeet-tdt` ディレクトリが含まれます）。
 
 4. 生成物をチェックします。
 
-  - `dist/parakeet-tdt/Parakeet TDT.app` を Finder から起動して動作確認します。
-  - `dist/parakeet-tdt/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
+  - `dist/Parakeet TDT.app` を Finder から起動して動作確認します。
+  - `dist/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
   - 配布前に不要なキャッシュ（`build/` 配下の生成物や `.DS_Store` 等）が混入していないかを見直してください。
 
 ### GitHub Actions での自動リリース

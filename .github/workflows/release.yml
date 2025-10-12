@@ -41,13 +41,13 @@ jobs:
 
       - name: Create macOS ZIP archive
         run: |
-          APP="dist/parakeet-tdt/Parakeet TDT.app"
+          APP="dist/Parakeet TDT.app"
           ditto -c -k --sequesterRsrc --keepParent "$APP" parakeet-tdt-macos-arm64.zip
           shasum -a 256 parakeet-tdt-macos-arm64.zip > parakeet-tdt-macos-arm64.zip.sha256
 
       - name: Create macOS DMG
         run: |
-          APP="dist/parakeet-tdt/Parakeet TDT.app"
+          APP="dist/Parakeet TDT.app"
           STAGE="dist/dmg-stage"
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
