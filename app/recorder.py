@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import sounddevice as sd
@@ -20,17 +20,26 @@ class AudioRecorder:
         channels: int = 1,
         subtype: str = "PCM_16",
         device: Optional[int | str] = None,
+        frame_consumer: Optional[Callable[[np.ndarray], None]] = None,
     ) -> None:
         self.samplerate = samplerate
         self.channels = channels
         self.subtype = subtype
         self.device = device
+        self._frame_consumer = frame_consumer
 
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._is_recording = False
         self._lock = threading.Lock()
-        self._logger = logging.getLogger("parakeet.recorder")
+        self._logger = logging.getLogger("mimitranscribe.recorder")
+
+    def set_frame_consumer(
+        self, consumer: Optional[Callable[[np.ndarray], None]]
+    ) -> None:
+        """Set a callable that receives raw audio frames during recording."""
+
+        self._frame_consumer = consumer
 
     @property
     def is_recording(self) -> bool:
@@ -106,6 +115,11 @@ class AudioRecorder:
             # The status object stringifies useful debug info, but we avoid raising.
             self._logger.warning("Input stream status: %s", status)
         wav_file.write(indata)
+        if self._frame_consumer is not None:
+            try:
+                self._frame_consumer(indata.copy())
+            except Exception:  # pragma: no cover - defensive logging
+                self._logger.exception("Frame consumer raised an exception")
         if self._stop_event.is_set():
             self._logger.debug("Stop event detected inside callback")
             raise sd.CallbackStop()

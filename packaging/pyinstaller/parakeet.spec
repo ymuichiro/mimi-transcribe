@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec file for Parakeet TDT Transcriber.
+"""PyInstaller spec file for MimiTranscribe.
 
 Usage:
     PARAKEET_FFMPEG_PATH=/absolute/path/to/ffmpeg \
@@ -27,6 +27,25 @@ from PyInstaller.utils.hooks import (
 _spec_path = Path(globals().get("__file__", sys.argv[0])).resolve()
 PROJECT_ROOT = _spec_path.parents[2]
 PACKAGE_ROOT = PROJECT_ROOT / "app"
+DIST_ROOT = PROJECT_ROOT / "dist" / "mimtranscribe"
+WORK_ROOT = PROJECT_ROOT / "build" / "pyinstaller"
+
+distpath = str(DIST_ROOT)
+workpath = str(WORK_ROOT)
+specpath = str(_spec_path.parent)
+
+# Version helpers -------------------------------------------------------------
+
+
+def _normalize_version(raw: str | None) -> str:
+    if not raw:
+        return "0.0.0"
+    return raw.removeprefix("v")
+
+
+APP_VERSION = _normalize_version(
+    os.environ.get("PARAKEET_VERSION") or os.environ.get("GITHUB_REF_NAME")
+)
 
 # Optional ffmpeg bundling ----------------------------------------------------
 FFMPEG_ENV_VAR = "PARAKEET_FFMPEG_PATH"
@@ -87,7 +106,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="parakeet-tdt",
+    name="mimtranscribe",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -104,5 +123,22 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="parakeet-tdt",
+    name="mimtranscribe",
+)
+
+bundle = BUNDLE(
+    exe,
+    coll,
+    name="MimiTranscribe.app",
+    icon=str(PROJECT_ROOT / "assets" / "icon.icns"),
+    bundle_identifier="com.mimitranscribe.app",
+    info_plist={
+        "CFBundleDisplayName": "MimiTranscribe",
+        "CFBundleName": "MimiTranscribe",
+        "CFBundleExecutable": "mimtranscribe",
+        "CFBundleVersion": APP_VERSION,
+        "CFBundleShortVersionString": APP_VERSION,
+        "LSMinimumSystemVersion": "14.0",
+        "NSMicrophoneUsageDescription": "音声を書き起こすためにマイクを利用します。",
+    },
 )

@@ -40,7 +40,7 @@ class ParakeetModelManager:
 
     @classmethod
     def get_model(cls, config: TranscriberConfig):
-        logger = logging.getLogger("parakeet.transcriber")
+        logger = logging.getLogger("mimitranscribe.transcriber")
         with cls._lock:
             if cls._model is None or cls._loaded_config != config:
                 logger.info(
@@ -90,7 +90,7 @@ class ParakeetModelManager:
 
 def transcribe_audio(audio_path: Path, config: TranscriberConfig) -> AlignedResult:
     """Transcribe ``audio_path`` using the configured Parakeet model."""
-    logger = logging.getLogger("parakeet.transcriber")
+    logger = logging.getLogger("mimitranscribe.transcriber")
     logger.info("Transcription started: file=%s", audio_path)
     model = ParakeetModelManager.get_model(config)
     dtype = mx.float32 if config.use_fp32 else mx.bfloat16
@@ -110,7 +110,7 @@ def transcribe_audio(audio_path: Path, config: TranscriberConfig) -> AlignedResu
 def ensure_model_downloaded(config: TranscriberConfig) -> None:
     """Ensure model files are present locally, downloading them if needed."""
     model_id = config.model_id
-    logger = logging.getLogger("parakeet.transcriber")
+    logger = logging.getLogger("mimitranscribe.transcriber")
     logger.info("Ensuring model assets are available: %s", model_id)
 
     model_path = Path(model_id).expanduser()

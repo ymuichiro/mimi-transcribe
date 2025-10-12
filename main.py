@@ -10,12 +10,12 @@ from app.gui import run_app
 
 
 def _setup_logging() -> None:
-    log_dir = pathlib.Path.home() / "Library" / "Logs" / "parakeet-tdt-study"
+    log_dir = pathlib.Path.home() / "Library" / "Logs" / "mimitranscribe"
     log_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_file = log_dir / f"session-{timestamp}.log"
 
-    level_name = os.getenv("PARAKEET_LOG_LEVEL", "DEBUG")
+    level_name = os.getenv("MIMITRANSCRIBE_LOG_LEVEL", "DEBUG")
     level = getattr(logging, level_name.upper(), logging.DEBUG)
 
     logging.basicConfig(
@@ -27,12 +27,12 @@ def _setup_logging() -> None:
         ],
     )
 
-    logging.getLogger("parakeet").info("Logging initialized. file=%s", log_file)
+    logging.getLogger("mimitranscribe").info("Logging initialized. file=%s", log_file)
 
 
 def main() -> None:
     _setup_logging()
-    logger = logging.getLogger("parakeet.main")
+    logger = logging.getLogger("mimitranscribe.main")
     logger.info("Launching GUI")
     exit_code = run_app()
     logger.info("GUI exited with code %s", exit_code)

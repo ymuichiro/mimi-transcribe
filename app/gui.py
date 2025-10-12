@@ -2,16 +2,26 @@ from __future__ import annotations
 
 import logging
 import tempfile
+import threading
 import traceback
+from collections import deque
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
+import numpy as np
 import sounddevice as sd  # type: ignore[import]
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import (
+    QCloseEvent,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPalette,
+    QPen,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -55,7 +65,7 @@ class ModelPreloadThread(QThread):
     def __init__(self, configs: list[TranscriberConfig], parent=None) -> None:
         super().__init__(parent)
         self.configs = configs
-        self._logger = logging.getLogger("parakeet.gui.preload")
+        self._logger = logging.getLogger("mimitranscribe.gui.preload")
 
     def run(self) -> None:  # noqa: D401 - Qt entry point
         total = len(self.configs)
@@ -97,7 +107,7 @@ class TranscriptionThread(QThread):
         super().__init__(parent)
         self.audio_path = audio_path
         self.config = config
-        self._logger = logging.getLogger("parakeet.gui.thread")
+        self._logger = logging.getLogger("mimitranscribe.gui.thread")
 
     def run(self) -> None:  # noqa: D401 - Qt entry point
         try:
@@ -114,18 +124,129 @@ class TranscriptionThread(QThread):
             self.failed.emit(error_text)
 
 
+class WaveformWidget(QWidget):
+    """Simple real-time waveform display for audio input."""
+
+    def __init__(self, parent: Optional[QWidget] = None, buffer_samples: int = 4096):
+        super().__init__(parent)
+        self._buffer = np.zeros(buffer_samples, dtype=np.float32)
+        self._lock = threading.Lock()
+        self._active = False
+        self._has_data = False
+        self._wave_color = QColor("#3D8AF7")
+        self._grid_color = QColor("#C9D8FB")
+        self.setObjectName("waveformWidget")
+        self.setMinimumHeight(120)
+        self.setAutoFillBackground(False)
+
+    def set_active(self, active: bool) -> None:
+        if self._active == active:
+            return
+        self._active = active
+        if not active:
+            self.clear()
+        self.update()
+
+    def is_active(self) -> bool:
+        return self._active
+
+    def append_samples(self, samples: np.ndarray) -> None:
+        if not self._active:
+            return
+        if samples.size == 0:
+            return
+        flattened = np.asarray(samples, dtype=np.float32).reshape(-1)
+        with self._lock:
+            if flattened.size >= self._buffer.size:
+                self._buffer[:] = flattened[-self._buffer.size :]
+            else:
+                shift = flattened.size
+                self._buffer[:-shift] = self._buffer[shift:]
+                self._buffer[-shift:] = flattened
+            self._has_data = True
+        self.update()
+
+    def clear(self) -> None:
+        with self._lock:
+            self._buffer.fill(0)
+            self._has_data = False
+        self.update()
+
+    def paintEvent(self, event):  # noqa: D401 - Qt override
+        painter = QPainter(self)
+        rect = self.rect()
+        painter.fillRect(rect, self.palette().color(self.backgroundRole()))
+
+        mid_y = rect.center().y()
+        grid_color = QColor(self._grid_color)
+        grid_color.setAlpha(90)
+        painter.setPen(QPen(grid_color, 1, Qt.PenStyle.DashLine))
+        painter.drawLine(rect.left(), mid_y, rect.right(), mid_y)
+
+        if not self._active or not self._has_data:
+            placeholder = (
+                "録音開始すると波形が表示されます"
+                if not self._active
+                else "音声の入力を待機しています…"
+            )
+            placeholder_color = self.palette().color(QPalette.ColorRole.Mid)
+            painter.setPen(placeholder_color)
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, placeholder)
+            return
+
+        with self._lock:
+            data = self._buffer.copy()
+
+        width = rect.width()
+        height = rect.height()
+        if width <= 2 or height <= 0 or data.size < 2:
+            return
+
+        max_val = float(np.max(np.abs(data)))
+        if max_val <= 1e-6:
+            normalized = data
+        else:
+            normalized = data / max_val
+
+        indices = np.linspace(0, normalized.size - 1, num=width, dtype=np.int32)
+        samples = normalized[indices]
+
+        amplitude = height / 2.2
+        origin_x = rect.left()
+        origin_y = mid_y
+
+        path = QPainterPath()
+        path.moveTo(origin_x, origin_y - samples[0] * amplitude)
+        for x_offset, sample in enumerate(samples[1:], start=1):
+            path.lineTo(origin_x + x_offset, origin_y - sample * amplitude)
+
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pen = QPen(self._wave_color, 1.5)
+        painter.setPen(pen)
+        painter.drawPath(path)
+
+
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle("Parakeet TDT Transcriber")
+        self.setWindowTitle("MimiTranscribe")
         self.resize(900, 600)
         self.setMinimumSize(720, 480)
 
-        self._logger = logging.getLogger("parakeet.gui")
+        self._logger = logging.getLogger("mimitranscribe.gui")
         self._logger.info("MainWindow initializing")
         self.recorder = AudioRecorder()
         self.transcriber_config = TranscriberConfig()
+        self.waveform_widget = WaveformWidget(self)
+
+        self._waveform_queue = deque(maxlen=24)
+        self._waveform_queue_lock = threading.Lock()
+        self._waveform_timer = QTimer(self)
+        self._waveform_timer.setInterval(33)
+        self._waveform_timer.timeout.connect(self._drain_waveform_queue)
+        self._waveform_timer.start()
+        self.recorder.set_frame_consumer(self._on_audio_frame)
 
         self._initialization_done = False
         self._preload_thread: Optional[ModelPreloadThread] = None
@@ -236,13 +357,18 @@ class MainWindow(QMainWindow):
 
     def _start_recording(self) -> None:
         self._update_config_from_controls()
-        path = Path(tempfile.gettempdir()) / f"parakeet-recording-{uuid4().hex}.wav"
+        self._clear_waveform_queue()
+        self.waveform_widget.set_active(True)
+        path = (
+            Path(tempfile.gettempdir()) / f"mimitranscribe-recording-{uuid4().hex}.wav"
+        )
         self._logger.info("Starting recording to %s", path)
         try:
             self.recorder.start(path)
         except Exception as exc:
             self._logger.exception("Failed to start recording")
             self._show_error("録音を開始できません", message=str(exc))
+            self.waveform_widget.set_active(False)
             return
 
         self._recording_path = path
@@ -318,7 +444,6 @@ class MainWindow(QMainWindow):
                 self._logger.warning(
                     "Failed to delete temp file: %s", self._recording_path
                 )
-                pass
         self._recording_path = None
         self._transcription_thread = None
 
@@ -330,7 +455,33 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.elapsed_label.setText("録音時間: 00:00")
         self._set_config_controls_enabled(True)
+        self.waveform_widget.set_active(False)
+        self._clear_waveform_queue()
         self._logger.debug("UI reset")
+
+    def _on_audio_frame(self, frame: np.ndarray) -> None:
+        with self._waveform_queue_lock:
+            if len(self._waveform_queue) == self._waveform_queue.maxlen:
+                self._waveform_queue.popleft()
+            self._waveform_queue.append(frame)
+
+    def _drain_waveform_queue(self) -> None:
+        if not self.waveform_widget.is_active():
+            self._clear_waveform_queue()
+            return
+
+        frames: list[np.ndarray] = []
+        with self._waveform_queue_lock:
+            while self._waveform_queue:
+                frames.append(self._waveform_queue.popleft())
+
+        if frames:
+            concatenated = np.concatenate(frames)
+            self.waveform_widget.append_samples(concatenated)
+
+    def _clear_waveform_queue(self) -> None:
+        with self._waveform_queue_lock:
+            self._waveform_queue.clear()
 
     def _show_error(
         self,
@@ -361,6 +512,8 @@ class MainWindow(QMainWindow):
             self._preload_thread.wait(1000)
         if self._record_timer.isActive():
             self._record_timer.stop()
+        if self._waveform_timer.isActive():
+            self._waveform_timer.stop()
         super().closeEvent(event)
 
     # ui helpers --------------------------------------------------------------
@@ -402,6 +555,14 @@ class MainWindow(QMainWindow):
         config_layout.addRow("コンテキスト長", self.local_attention_spin)
         config_group.setLayout(config_layout)
         root_layout.addWidget(config_group)
+
+        waveform_group = QGroupBox("リアルタイム波形")
+        waveform_layout = QVBoxLayout()
+        waveform_layout.setContentsMargins(8, 8, 8, 8)
+        waveform_layout.setSpacing(8)
+        waveform_layout.addWidget(self.waveform_widget)
+        waveform_group.setLayout(waveform_layout)
+        root_layout.addWidget(waveform_group)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -552,6 +713,13 @@ class MainWindow(QMainWindow):
                 )
             )
         )
+        self.waveform_widget.setStyleSheet(
+            "#waveformWidget {"
+            " background: #f7f9fc;"
+            " border: 1px solid #d0d7de;"
+            " border-radius: 8px;"
+            " }"
+        )
 
     def _set_config_controls_enabled(self, enabled: bool) -> None:
         for widget in (
@@ -692,7 +860,7 @@ class MainWindow(QMainWindow):
 
 
 def run_app() -> int:
-    logger = logging.getLogger("parakeet.gui")
+    logger = logging.getLogger("mimitranscribe.gui")
     logger.info("Creating QApplication")
     app = QApplication.instance() or QApplication([])
     logger.info("QApplication created: %s", app)
