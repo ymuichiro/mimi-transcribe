@@ -85,24 +85,24 @@ You can use **PyInstaller** to create a single distribution package that include
 
     *If you want to use your existing Homebrew version, use the path obtained from `which ffmpeg`.*
 
-3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` in the generated package.
+3.  Build the application with PyInstaller. Specifying the binary with `PARAKEET_FFMPEG_PATH` will ensure it is copied to `Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` in the generated package.
 
     ```bash
   PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
     ```
 
-    The output will be generated in the `dist/parakeet-tdt` directory (the **`.app` bundle** and supporting files).
+    The output will be generated in the `dist/parakeet-tdt` directory containing the **`Parakeet TDT.app` bundle**.
 
 4.  Check the generated files.
 
-      - Launch `dist/parakeet-tdt/parakeet-tdt.app` from Finder to confirm functionality.
-      - Verify that `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
-  - Before distribution, check that no unnecessary cache files (like `build/` artifacts or `.DS_Store`) have been included.
+      - Launch `dist/parakeet-tdt/Parakeet TDT.app` from Finder to confirm functionality.
+      - Verify that `dist/parakeet-tdt/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` exists and has `+x` permissions.
+      - Before distribution, check that no unnecessary cache files (like `build/` artifacts or `.DS_Store`) have been included.
 
 ### Automatic Release with GitHub Actions
 
-  - Pushing a new tag (a semantic version starting with `v*`) will trigger GitHub Actions to run the PyInstaller build on a macOS Runner, creating an `.app` bundle that includes the `ffmpeg` binary fetched from evermeet.cx.
+  - Pushing a new tag (a semantic version starting with `v*`) will trigger GitHub Actions to run the PyInstaller build on a macOS Runner, creating a `.zip` and `.dmg` that contain `Parakeet TDT.app` bundled with the `ffmpeg` binary fetched from evermeet.cx. (The artifacts are **not code-signed**; Gatekeeper will show a warning the first time.)
 
 ### PyInstaller Setup Notes
 
@@ -182,24 +182,24 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 
    ※ 既存の Homebrew 版を利用する場合は `which ffmpeg` で得られるパスを使ってください。
 
-3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
+3. PyInstaller でビルドします。`PARAKEET_FFMPEG_PATH` にバイナリを指定すると、生成物の `Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` にコピーされます。
 
    ```bash
   PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
   uv run pyinstaller packaging/pyinstaller/parakeet.spec
    ```
 
-   出力は `dist/parakeet-tdt` ディレクトリに生成されます（`.app` バンドルとサポートファイル）。
+  出力は `dist/parakeet-tdt` ディレクトリに生成されます（`Parakeet TDT.app` バンドルが含まれます）。
 
 4. 生成物をチェックします。
 
-   - `dist/parakeet-tdt/parakeet-tdt.app` を Finder から起動して動作確認します。
-   - `dist/parakeet-tdt/parakeet-tdt.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
+  - `dist/parakeet-tdt/Parakeet TDT.app` を Finder から起動して動作確認します。
+  - `dist/parakeet-tdt/Parakeet TDT.app/Contents/MacOS/bin/ffmpeg` が存在し、権限が `+x` になっていることを確認します。
   - 配布前に不要なキャッシュ（`build/` 配下の生成物や `.DS_Store` 等）が混入していないかを見直してください。
 
 ### GitHub Actions での自動リリース
 
-- 新しいタグ（`v*` で始まるセマンティックバージョン）をプッシュすると、GitHub Actions が macOS Runner 上で PyInstaller ビルドを実行し、evermeet.cx から取得した `ffmpeg` を同梱した `.app` バンドルを作成します。
+- 新しいタグ（`v*` で始まるセマンティックバージョン）をプッシュすると、GitHub Actions が macOS Runner 上で PyInstaller ビルドを実行し、evermeet.cx から取得した `ffmpeg` を同梱した `Parakeet TDT.app` を ZIP と DMG にまとめて生成します（現状はコード署名されないため、初回起動時に Gatekeeper に警告される点に注意してください）。
 
 ### PyInstaller セットアップのポイント
 

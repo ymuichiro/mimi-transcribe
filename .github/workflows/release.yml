@@ -33,14 +33,27 @@ jobs:
           chmod +x build/ffmpeg/ffmpeg
 
       - name: Build PyInstaller bundle
+        env:
+          PARAKEET_VERSION: ${{ github.ref_name }}
         run: |
           PARAKEET_FFMPEG_PATH="$(pwd)/build/ffmpeg/ffmpeg" \
           uv run pyinstaller packaging/pyinstaller/parakeet.spec
 
-      - name: Archive installer
+      - name: Create macOS ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent dist/parakeet-tdt parakeet-tdt-macos-arm64.zip
+          APP="dist/parakeet-tdt/Parakeet TDT.app"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" parakeet-tdt-macos-arm64.zip
           shasum -a 256 parakeet-tdt-macos-arm64.zip > parakeet-tdt-macos-arm64.zip.sha256
+
+      - name: Create macOS DMG
+        run: |
+          APP="dist/parakeet-tdt/Parakeet TDT.app"
+          STAGE="dist/dmg-stage"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          cp -R "$APP" "$STAGE/"
+          hdiutil create -volname "Parakeet TDT" -srcfolder "$STAGE" -format UDZO -ov parakeet-tdt-macos-arm64.dmg
+          shasum -a 256 parakeet-tdt-macos-arm64.dmg > parakeet-tdt-macos-arm64.dmg.sha256
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -49,6 +62,8 @@ jobs:
           path: |
             parakeet-tdt-macos-arm64.zip
             parakeet-tdt-macos-arm64.zip.sha256
+            parakeet-tdt-macos-arm64.dmg
+            parakeet-tdt-macos-arm64.dmg.sha256
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -56,5 +71,7 @@ jobs:
           files: |
             parakeet-tdt-macos-arm64.zip
             parakeet-tdt-macos-arm64.zip.sha256
+            parakeet-tdt-macos-arm64.dmg
+            parakeet-tdt-macos-arm64.dmg.sha256
           generate_release_notes: true
           tag_name: ${{ github.ref_name }}

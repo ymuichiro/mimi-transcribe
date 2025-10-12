@@ -28,6 +28,19 @@ _spec_path = Path(globals().get("__file__", sys.argv[0])).resolve()
 PROJECT_ROOT = _spec_path.parents[2]
 PACKAGE_ROOT = PROJECT_ROOT / "app"
 
+# Version helpers -------------------------------------------------------------
+
+
+def _normalize_version(raw: str | None) -> str:
+    if not raw:
+        return "0.0.0"
+    return raw.removeprefix("v")
+
+
+APP_VERSION = _normalize_version(
+    os.environ.get("PARAKEET_VERSION") or os.environ.get("GITHUB_REF_NAME")
+)
+
 # Optional ffmpeg bundling ----------------------------------------------------
 FFMPEG_ENV_VAR = "PARAKEET_FFMPEG_PATH"
 ffmpeg_path = os.environ.get(FFMPEG_ENV_VAR)
@@ -96,8 +109,24 @@ exe = EXE(
     icon=None,
 )
 
-coll = COLLECT(
+bundle = BUNDLE(
     exe,
+    name="Parakeet TDT.app",
+    icon=str(PROJECT_ROOT / "assets" / "icon.icns"),
+    bundle_identifier="com.parakeet.tdt",
+    info_plist={
+        "CFBundleDisplayName": "Parakeet TDT",
+        "CFBundleName": "Parakeet TDT",
+        "CFBundleExecutable": "parakeet-tdt",
+        "CFBundleVersion": APP_VERSION,
+        "CFBundleShortVersionString": APP_VERSION,
+        "LSMinimumSystemVersion": "14.0",
+        "NSMicrophoneUsageDescription": "音声を書き起こすためにマイクを利用します。",
+    },
+)
+
+coll = COLLECT(
+    bundle,
     a.binaries,
     a.zipfiles,
     a.datas,
