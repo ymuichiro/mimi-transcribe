@@ -27,6 +27,12 @@ from PyInstaller.utils.hooks import (
 _spec_path = Path(globals().get("__file__", sys.argv[0])).resolve()
 PROJECT_ROOT = _spec_path.parents[2]
 PACKAGE_ROOT = PROJECT_ROOT / "app"
+DIST_ROOT = PROJECT_ROOT / "dist" / "parakeet-tdt"
+WORK_ROOT = PROJECT_ROOT / "build" / "pyinstaller"
+
+distpath = str(DIST_ROOT)
+workpath = str(WORK_ROOT)
+specpath = str(_spec_path.parent)
 
 # Version helpers -------------------------------------------------------------
 
@@ -98,8 +104,10 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    [],
-    exclude_binaries=True,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    exclude_binaries=False,
     name="parakeet-tdt",
     debug=False,
     bootloader_ignore_signals=False,
@@ -123,15 +131,4 @@ bundle = BUNDLE(
         "LSMinimumSystemVersion": "14.0",
         "NSMicrophoneUsageDescription": "音声を書き起こすためにマイクを利用します。",
     },
-)
-
-coll = COLLECT(
-    bundle,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name="parakeet-tdt",
 )
