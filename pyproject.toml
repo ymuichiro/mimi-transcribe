@@ -1,7 +1,7 @@
 [project]
 name = "parakeet-tdt-study"
 version = "0.1.0"
-description = "Add your description here"
+description = "Desktop transcription app powered by Parakeet-TDT and PySide6"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,3 +10,16 @@ dependencies = [
     "sounddevice>=0.4.6",
     "soundfile>=0.12.1",
 ]
+
+[project.optional-dependencies]
+bundle = [
+    "pyinstaller>=6.10",
+    "pyinstaller-hooks-contrib>=2024.7",
+    "macholib>=1.16.3",
+]
+
+[project.scripts]
+parakeet-tdt = "main:main"
+
+[project.license]
+file = "LICENSE"
