@@ -270,6 +270,10 @@ class MainWindow(QMainWindow):
         self.start_button.clicked.connect(self.toggle_recording)
         self.start_button.setMinimumWidth(160)
 
+        self.import_button = QPushButton("ファイル取り込み")
+        self.import_button.clicked.connect(self.import_audio_file)
+        self.import_button.setMinimumWidth(160)
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
         self.progress_bar.setVisible(False)
@@ -333,6 +337,7 @@ class MainWindow(QMainWindow):
 
         self._set_config_controls_enabled(False)
         self.start_button.setEnabled(False)
+        self.import_button.setEnabled(False)
         self._prepare_startup()
 
         self._logger.info("Loading audio devices")
@@ -355,6 +360,37 @@ class MainWindow(QMainWindow):
         else:
             self._start_recording()
 
+    def import_audio_file(self) -> None:
+        """Import and transcribe an audio file."""
+        if not self._initialization_done:
+            self._logger.info(
+                "File import requested before initialization completed; ignoring"
+            )
+            return
+
+        if self.recorder.is_recording or (
+            self._transcription_thread and self._transcription_thread.isRunning()
+        ):
+            self._logger.info("Cannot import file while recording or transcribing")
+            return
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "音声ファイルを選択",
+            str(Path.home()),
+            "Audio Files (*.wav *.mp3 *.m4a *.flac *.ogg *.opus);;All Files (*)",
+        )
+        if not file_path:
+            return
+
+        audio_path = Path(file_path)
+        if not audio_path.exists():
+            self._show_error("ファイルが見つかりません", message=str(audio_path))
+            return
+
+        self._logger.info("Importing audio file: %s", audio_path)
+        self._start_transcription(audio_path)
+
     def _start_recording(self) -> None:
         self._update_config_from_controls()
         self._clear_waveform_queue()
@@ -374,6 +410,7 @@ class MainWindow(QMainWindow):
         self._recording_path = path
         self.status_label.setText("録音中…もう一度ボタンを押すと停止します")
         self.start_button.setText("録音停止")
+        self.import_button.setEnabled(False)
         self.output_text.clear()
         self._set_config_controls_enabled(False)
         self.progress_bar.setVisible(False)
@@ -399,14 +436,38 @@ class MainWindow(QMainWindow):
             self._reset_ui()
             return
 
+        self._start_transcription(self._recording_path, is_temporary=True)
+
+    def _start_transcription(
+        self, audio_path: Path, is_temporary: bool = False
+    ) -> None:
+        """Start transcription of an audio file.
+        
+        Args:
+            audio_path: Path to the audio file to transcribe
+            is_temporary: If True, delete the file after transcription
+        """
+        self.output_text.clear()
+        self.history_list.clearSelection()
+        self.start_button.setEnabled(False)
+        self.import_button.setEnabled(False)
+        self.status_label.setText("書き起こし中です。しばらくお待ちください…")
+        self.progress_bar.setVisible(True)
+        self.statusBar().showMessage("書き起こし中", 3000)
+        self._set_config_controls_enabled(False)
+
+        self._update_config_from_controls()
         config_copy = replace(self.transcriber_config)
-        thread = TranscriptionThread(self._recording_path, config_copy, self)
+        thread = TranscriptionThread(audio_path, config_copy, self)
         thread.completed.connect(self._on_transcription_completed)
         thread.failed.connect(self._on_transcription_failed)
-        thread.finished.connect(self._cleanup_thread)
+        if is_temporary:
+            thread.finished.connect(lambda: self._cleanup_thread(audio_path))
+        else:
+            thread.finished.connect(lambda: self._cleanup_thread(None))
 
         self._transcription_thread = thread
-        self._logger.info("Transcription thread starting")
+        self._logger.info("Transcription thread starting for: %s", audio_path)
         thread.start()
 
     def _on_transcription_completed(self, text: str) -> None:
@@ -434,22 +495,22 @@ class MainWindow(QMainWindow):
 
         self._logger.error("Transcription failed. Details shown to user")
 
-    def _cleanup_thread(self) -> None:
+    def _cleanup_thread(self, temp_file: Optional[Path] = None) -> None:
         self._reset_ui()
-        if self._recording_path and self._recording_path.exists():
+        # Clean up temporary recording file if provided
+        if temp_file and temp_file.exists():
             try:
-                self._recording_path.unlink()
-                self._logger.debug("Temporary file deleted: %s", self._recording_path)
+                temp_file.unlink()
+                self._logger.debug("Temporary file deleted: %s", temp_file)
             except OSError:
-                self._logger.warning(
-                    "Failed to delete temp file: %s", self._recording_path
-                )
+                self._logger.warning("Failed to delete temp file: %s", temp_file)
         self._recording_path = None
         self._transcription_thread = None
 
     def _reset_ui(self) -> None:
         self.start_button.setEnabled(True)
         self.start_button.setText("録音開始")
+        self.import_button.setEnabled(True)
         if not self.recorder.is_recording:
             self.status_label.setText("マイク入力の準備ができています")
         self.progress_bar.setVisible(False)
@@ -526,6 +587,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(12)
         header_layout.addWidget(self.start_button)
+        header_layout.addWidget(self.import_button)
 
         status_container = QVBoxLayout()
         status_container.setSpacing(4)
@@ -681,6 +743,7 @@ class MainWindow(QMainWindow):
         self._cleanup_preload_dialog()
         self._set_config_controls_enabled(True)
         self.start_button.setEnabled(True)
+        self.import_button.setEnabled(True)
         if status_text is None:
             status_text = "マイク入力の準備ができています"
         if bar_message is None:
