@@ -19,9 +19,9 @@ from parakeet_mlx import AlignedResult, from_pretrained  # type: ignore[import]
 @dataclass(slots=True)
 class TranscriberConfig:
     model_id: str = "mlx-community/parakeet-tdt_ctc-0.6b-ja"
-    use_fp32: bool = False
-    local_attention: bool = False
-    local_attention_context_size: int = 256
+    use_fp32: bool = True
+    local_attention: bool = True
+    local_attention_context_size: int = 2048
     cache_dir: Optional[Path] = None
     chunk_duration: Optional[float] = 4.0
     chunk_overlap: float = 0.5

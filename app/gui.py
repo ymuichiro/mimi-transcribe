@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
         self.local_attention_checkbox.toggled.connect(self._on_local_attention_toggled)
 
         self.local_attention_spin = QSpinBox()
-        self.local_attention_spin.setRange(32, 2048)
+        self.local_attention_spin.setRange(32, 6144)
         self.local_attention_spin.setSingleStep(32)
         self.local_attention_spin.setValue(
             self.transcriber_config.local_attention_context_size
@@ -299,6 +299,22 @@ class MainWindow(QMainWindow):
         self.device_refresh_button = QToolButton()
         self.device_refresh_button.setText("再読込")
         self.device_refresh_button.clicked.connect(self._refresh_devices)
+
+        # Help buttons for parameters
+        self.fp32_help_button = QToolButton()
+        self.fp32_help_button.setText("?")
+        self.fp32_help_button.setFixedSize(24, 24)
+        self.fp32_help_button.clicked.connect(self._show_fp32_help)
+
+        self.local_attention_help_button = QToolButton()
+        self.local_attention_help_button.setText("?")
+        self.local_attention_help_button.setFixedSize(24, 24)
+        self.local_attention_help_button.clicked.connect(self._show_local_attention_help)
+
+        self.context_length_help_button = QToolButton()
+        self.context_length_help_button.setText("?")
+        self.context_length_help_button.setFixedSize(24, 24)
+        self.context_length_help_button.clicked.connect(self._show_context_length_help)
 
         self.copy_output_button = QToolButton()
         self.copy_output_button.setText("コピー")
@@ -550,9 +566,9 @@ class MainWindow(QMainWindow):
             QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
         )
         config_layout.addRow("マイクデバイス", self._build_device_selector())
-        config_layout.addRow("精度設定", self.fp32_checkbox)
-        config_layout.addRow("局所アテンション", self.local_attention_checkbox)
-        config_layout.addRow("コンテキスト長", self.local_attention_spin)
+        config_layout.addRow("精度設定", self._build_fp32_control())
+        config_layout.addRow("局所アテンション", self._build_local_attention_control())
+        config_layout.addRow("コンテキスト長", self._build_context_length_control())
         config_group.setLayout(config_layout)
         root_layout.addWidget(config_group)
 
@@ -611,6 +627,33 @@ class MainWindow(QMainWindow):
         layout.setSpacing(6)
         layout.addWidget(self.device_combo, stretch=1)
         layout.addWidget(self.device_refresh_button)
+        return wrapper
+
+    def _build_fp32_control(self) -> QWidget:
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.fp32_checkbox, stretch=1)
+        layout.addWidget(self.fp32_help_button)
+        return wrapper
+
+    def _build_local_attention_control(self) -> QWidget:
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.local_attention_checkbox, stretch=1)
+        layout.addWidget(self.local_attention_help_button)
+        return wrapper
+
+    def _build_context_length_control(self) -> QWidget:
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.local_attention_spin, stretch=1)
+        layout.addWidget(self.context_length_help_button)
         return wrapper
 
     def _prepare_startup(self) -> None:
@@ -857,6 +900,50 @@ class MainWindow(QMainWindow):
             self._show_error("保存に失敗しました", message=str(exc))
             return
         self.statusBar().showMessage("書き起こし結果を保存しました", 4000)
+
+    def _show_fp32_help(self) -> None:
+        """Show help information for FP32/FP16 parameter."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("FP32 と FP16 について")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setText(
+            "精度を最優先し、多少の処理時間とメモリ増加を許容できるなら FP32 が安全です。"
+            "ただし Parakeet-TDT は FP16 でも十分安定に動作するケースが多く、"
+            "速度とメモリ効率を重視するなら FP16 がバランス良い選択になります。\n\n"
+            "目安として、録音環境が静かでマイク性能も良ければ FP16 でも精度差は僅少です。"
+            "雑音が多い・スペクトルが潰れやすい素材や方言など難素材なら FP32 で再評価してみてください。"
+        )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+    def _show_local_attention_help(self) -> None:
+        """Show help information for local attention parameter."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Local Attention（局所注意）について")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setText(
+            "長い音声を一括処理するときは有効にしておくのが基本です。"
+            "FastConformer がローカルウィンドウ＋少数のグローバルトークンで計算量を抑えているため、"
+            "局所注意を活かすことでメモリ消費を安定させつつ、長時間音声でも破綻しにくくなります。"
+        )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+    def _show_context_length_help(self) -> None:
+        """Show help information for context length parameter."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("コンテキスト長（Context Window）について")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setText(
+            "2048 という値は、FastConformer の相対位置付けローカル注意ウィンドウ"
+            "（rel_pos_local_attn）における「チャンク長」やコンテキスト長として妥当な上限ラインです。\n\n"
+            "2048 フレーム ≒ およそ 20 秒弱の音声（サンプリングレートとストライドによる）を一チャンクで扱う感覚です。\n"
+            "あまりに大きい値を設定すると GPU/NPU メモリ使用量が急増し、速度低下やメモリ不足を招く可能性があります。\n\n"
+            "実際には 1024〜2048 の範囲で必要に応じて調整し、"
+            "長い音声はオートチャンク（自動分割）機構と併用するのが一般的です。"
+        )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
 
 
 def run_app() -> int:
