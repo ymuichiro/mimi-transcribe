@@ -28,6 +28,7 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 ## Key Features
 
 - **One-Step Transcription**: A single button controls the entire process, from starting to stopping the recording and performing the inference. The header displays the elapsed time and processing status.
+- **Audio File Import**: Import and transcribe existing audio files (MP3, WAV, M4A, FLAC, OGG, OPUS) with a single click, in addition to live microphone recording.
 - **Live Waveform Monitor**: Visualize microphone input levels in real time while recording so you can confirm that audio is being captured.
 - **Microphone Device Selection**: Available input devices are listed automatically and can be switched via a dropdown menu.
 - **Model Settings**: Easily toggle **FP32 mode** and **Local Attention** activation, or adjust the context window width via the GUI.
@@ -170,6 +171,7 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 ## 主な機能
 
 - **ワンステップ書き起こし**: 録音開始から停止・推論までを 1 つのボタンで操作。経過時間と処理状況をヘッダーに表示します。
+- **音声ファイル取り込み**: マイク録音に加えて、既存の音声ファイル（MP3、WAV、M4A、FLAC、OGG、OPUS）をワンクリックで読み込んで書き起こしができます。
 - **リアルタイム波形モニタ**: 録音中のマイク入力レベルを波形で表示し、音声が取り込まれていることを視覚的に確認できます。
 - **マイクデバイス選択**: 利用可能な入力デバイスを自動列挙し、ドロップダウンから切り替えられます。
 - **モデル設定**: FP32 モードやローカルアテンションの有効化／コンテキスト幅の調整を GUI で切り替え。
