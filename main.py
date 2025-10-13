@@ -9,6 +9,16 @@ from datetime import datetime
 from app.gui import run_app
 
 
+def _setup_ffmpeg_path() -> None:
+    """Add bundled ffmpeg to PATH when running in PyInstaller bundle."""
+    if hasattr(sys, "_MEIPASS"):
+        # Running in PyInstaller bundle
+        bin_dir = pathlib.Path(sys._MEIPASS) / "bin"
+        if bin_dir.exists():
+            # Add bundled bin directory to PATH
+            os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ.get("PATH", "")
+
+
 def _setup_logging() -> None:
     log_dir = pathlib.Path.home() / "Library" / "Logs" / "mimitranscribe"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -31,6 +41,7 @@ def _setup_logging() -> None:
 
 
 def main() -> None:
+    _setup_ffmpeg_path()
     _setup_logging()
     logger = logging.getLogger("mimitranscribe.main")
     logger.info("Launching GUI")
