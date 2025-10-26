@@ -207,12 +207,22 @@ def ensure_model_downloaded(config: TranscriberConfig) -> None:
     
     model_type = config.get_model_type()
     
-    # For Whisper models, we rely on mlx_whisper's built-in download mechanism
-    # which happens during transcription, so we just verify the model type
+    # For Whisper models, trigger download by loading the model
     if model_type == "whisper":
         if not WHISPER_AVAILABLE:
             raise ModelLoadError("Whisper モデルを使用するには mlx-whisper のインストールが必要です")
-        logger.info("Whisper model will be downloaded on first use: %s", model_id)
+        logger.info("DEBUG: Downloading Whisper model: %s", model_id)
+        try:
+            # Import load_model from mlx_whisper to trigger download
+            from mlx_whisper.load_models import load_model
+            logger.info("DEBUG: Calling load_model...")
+            # Load the model to trigger download (dtype is handled internally by mlx_whisper)
+            model = load_model(model_id)
+            logger.info("DEBUG: Whisper model loaded successfully")
+            logger.info("Whisper model downloaded and cached: %s", model_id)
+        except Exception as exc:
+            logger.exception("DEBUG: Failed to load Whisper model")
+            raise ModelLoadError(f"Whisper モデルのダウンロードに失敗しました: {str(exc)}") from exc
         return
 
     # For Parakeet models, check local path first

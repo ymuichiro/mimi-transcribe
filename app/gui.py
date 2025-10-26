@@ -887,6 +887,47 @@ class MainWindow(QMainWindow):
             is_parakeet = model_type == "parakeet"
             self.local_attention_checkbox.setEnabled(is_parakeet)
             self.local_attention_spin.setEnabled(is_parakeet and self.local_attention_checkbox.isChecked())
+            
+            # Trigger model download in background if it's a new model
+            self._logger.info("DEBUG: Triggering background download for model: %s", model_id)
+            self._trigger_model_download(model_id)
+    
+    def _trigger_model_download(self, model_id: str) -> None:
+        """Trigger background download of the selected model."""
+        config = replace(self.transcriber_config, model_id=model_id)
+        
+        # Show a progress dialog for the download
+        dialog = QProgressDialog("モデルをダウンロードしています...", "キャンセル", 0, 0, self)
+        dialog.setWindowTitle("モデルのダウンロード")
+        dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+        dialog.setMinimumDuration(500)  # Show after 500ms
+        dialog.setAutoClose(True)
+        dialog.setAutoReset(True)
+        
+        # Create a thread to download the model
+        thread = ModelPreloadThread([config], self)
+        
+        def on_progress(current, total, message):
+            dialog.setLabelText(message)
+        
+        def on_succeeded():
+            dialog.close()
+            self.statusBar().showMessage(f"モデルのダウンロードが完了しました: {model_id}", 3000)
+            self._logger.info("Model download succeeded: %s", model_id)
+        
+        def on_failed(failed_model_id, error_text):
+            dialog.close()
+            self._logger.error("Model download failed: %s - %s", failed_model_id, error_text)
+            self._show_error(
+                "モデルのダウンロードに失敗しました",
+                message=f"モデル: {failed_model_id}\n\n{error_text}"
+            )
+        
+        thread.progress.connect(on_progress)
+        thread.succeeded.connect(on_succeeded)
+        thread.failed.connect(on_failed)
+        thread.finished.connect(dialog.close)
+        thread.start()
 
     def _update_config_from_controls(self) -> None:
         model_id = self.model_combo.currentData(Qt.ItemDataRole.UserRole)
