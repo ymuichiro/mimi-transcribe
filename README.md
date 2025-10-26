@@ -163,7 +163,7 @@ The application supports multiple AI models for speech recognition:
 - **Parakeet-TDT 0.6B** (`mlx-community/parakeet-tdt_ctc-0.6b-ja`) - Default model, optimized for Japanese speech recognition
 - **Whisper Large V3** (`mlx-community/whisper-large-v3-mlx`) - High-accuracy multilingual model
 - **Whisper Large V3 Turbo** (`mlx-community/whisper-large-v3-turbo-q4`) - Fast, quantized version for efficient processing
-- **Voxtral Mini 3B** (`mlx-community/Voxtral-Mini-3B-2507-bf16`) - Advanced model with audio understanding capabilities
+- **Voxtral Mini 3B** (`mlx-community/Voxtral-Mini-3B-2507-bf16`) - Advanced multimodal model with transcription, translation, and audio Q&A capabilities
 
 You can switch between models using the model selector in the GUI. For Japanese audio, Parakeet-TDT is recommended. For multilingual support or higher accuracy requirements, use Whisper models. The initial launch may take some time as the selected model is downloaded.
 
@@ -305,6 +305,6 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 - **Parakeet-TDT 0.6B** (`mlx-community/parakeet-tdt_ctc-0.6b-ja`) - デフォルトモデル、日本語音声認識に最適化
 - **Whisper Large V3** (`mlx-community/whisper-large-v3-mlx`) - 高精度な多言語モデル
 - **Whisper Large V3 Turbo** (`mlx-community/whisper-large-v3-turbo-q4`) - 高速処理用の量子化版
-- **Voxtral Mini 3B** (`mlx-community/Voxtral-Mini-3B-2507-bf16`) - 音声理解機能を備えた先進モデル
+- **Voxtral Mini 3B** (`mlx-community/Voxtral-Mini-3B-2507-bf16`) - 書き起こし、翻訳、音声Q&A機能を備えた先進的なマルチモーダルモデル
 
 GUI のモデル選択から自由に切り替えられます。日本語音声には Parakeet-TDT を推奨します。多言語対応や高精度が必要な場合は Whisper モデルをご利用ください。初回起動時は選択したモデルのダウンロードに時間がかかる場合があります。

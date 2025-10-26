@@ -42,7 +42,7 @@ MODEL_REGISTRY = {
     "mlx-community/Voxtral-Mini-3B-2507-bf16": {
         "type": "whisper",
         "name": "Voxtral Mini 3B",
-        "description": "多言語音声認識・理解モデル"
+        "description": "書き起こし・翻訳・音声Q&A対応のマルチモーダルモデル"
     },
 }
 
