@@ -50,6 +50,7 @@ from PySide6.QtWidgets import (
 
 from .recorder import AudioRecorder
 from .transcriber import (
+    MODEL_REGISTRY,
     ModelLoadError,
     TranscriberConfig,
     ensure_model_downloaded,
@@ -112,7 +113,12 @@ class TranscriptionThread(QThread):
     def run(self) -> None:  # noqa: D401 - Qt entry point
         try:
             self._logger.info("Thread started: file=%s", self.audio_path)
+            self._logger.info("DEBUG: Config model_id=%s", self.config.model_id)
+            self._logger.info("DEBUG: About to call transcribe_audio")
             result = transcribe_audio(self.audio_path, self.config)
+            self._logger.info("DEBUG: transcribe_audio returned")
+            self._logger.info("DEBUG: Result type: %s", type(result))
+            self._logger.info("DEBUG: Has text attribute: %s", hasattr(result, 'text'))
             self._logger.info("Thread completed successfully")
             self.completed.emit(result.text.strip())
         except ModelLoadError as exc:
@@ -303,6 +309,21 @@ class MainWindow(QMainWindow):
         self.device_refresh_button = QToolButton()
         self.device_refresh_button.setText("再読込")
         self.device_refresh_button.clicked.connect(self._refresh_devices)
+
+        # Model selection combo box
+        self.model_combo = QComboBox()
+        self.model_combo.currentIndexChanged.connect(self._on_model_changed)
+        for model_id, model_info in MODEL_REGISTRY.items():
+            self.model_combo.addItem(model_info["name"], model_id)
+        # Set current model
+        current_index = self.model_combo.findData(self.transcriber_config.model_id)
+        if current_index >= 0:
+            self.model_combo.setCurrentIndex(current_index)
+
+        self.model_help_button = QToolButton()
+        self.model_help_button.setText("?")
+        self.model_help_button.setFixedSize(24, 24)
+        self.model_help_button.clicked.connect(self._show_model_help)
 
         # Help buttons for parameters
         self.fp32_help_button = QToolButton()
@@ -627,6 +648,7 @@ class MainWindow(QMainWindow):
         config_layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
         )
+        config_layout.addRow("音声認識モデル", self._build_model_selector())
         config_layout.addRow("マイクデバイス", self._build_device_selector())
         config_layout.addRow("精度設定", self._build_fp32_control())
         config_layout.addRow("局所アテンション", self._build_local_attention_control())
@@ -682,6 +704,15 @@ class MainWindow(QMainWindow):
         container.setLayout(root_layout)
         self.setCentralWidget(container)
 
+    def _build_model_selector(self) -> QWidget:
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.model_combo, stretch=1)
+        layout.addWidget(self.model_help_button)
+        return wrapper
+
     def _build_device_selector(self) -> QWidget:
         wrapper = QWidget()
         layout = QHBoxLayout(wrapper)
@@ -719,13 +750,18 @@ class MainWindow(QMainWindow):
         return wrapper
 
     def _prepare_startup(self) -> None:
-        configs = [replace(self.transcriber_config)]
+        # Create configs for all models in the registry to preload them
+        configs = []
+        for model_id in MODEL_REGISTRY.keys():
+            config = replace(self.transcriber_config, model_id=model_id)
+            configs.append(config)
+        
         if not configs:
             self._logger.info("No models to preload; enabling controls immediately")
             self._finalize_initialization()
             return
 
-        self._logger.info("Preparing default model at startup")
+        self._logger.info("Preparing all models at startup: %d models", len(configs))
         self.status_label.setText("必要なモデルを準備しています…")
         self.statusBar().showMessage("モデルを準備しています…")
 
@@ -829,6 +865,7 @@ class MainWindow(QMainWindow):
 
     def _set_config_controls_enabled(self, enabled: bool) -> None:
         for widget in (
+            self.model_combo,
             self.device_combo,
             self.device_refresh_button,
             self.fp32_checkbox,
@@ -840,9 +877,68 @@ class MainWindow(QMainWindow):
     def _on_local_attention_toggled(self, checked: bool) -> None:
         self.local_attention_spin.setEnabled(checked)
 
+    def _on_model_changed(self, index: int) -> None:
+        """Handle model selection change."""
+        model_id = self.model_combo.itemData(index, Qt.ItemDataRole.UserRole)
+        if model_id and model_id != self.transcriber_config.model_id:
+            self._logger.info("Model changed to: %s", model_id)
+            self.transcriber_config = replace(
+                self.transcriber_config,
+                model_id=model_id,
+            )
+            # Update UI based on model capabilities
+            model_type = self.transcriber_config.get_model_type()
+            # Parakeet-specific settings don't apply to Whisper models
+            is_parakeet = model_type == "parakeet"
+            self.local_attention_checkbox.setEnabled(is_parakeet)
+            self.local_attention_spin.setEnabled(is_parakeet and self.local_attention_checkbox.isChecked())
+            
+            # Trigger model download in background if it's a new model
+            self._logger.info("DEBUG: Triggering background download for model: %s", model_id)
+            self._trigger_model_download(model_id)
+    
+    def _trigger_model_download(self, model_id: str) -> None:
+        """Trigger background download of the selected model."""
+        config = replace(self.transcriber_config, model_id=model_id)
+        
+        # Show a progress dialog for the download
+        dialog = QProgressDialog("モデルをダウンロードしています...", "キャンセル", 0, 0, self)
+        dialog.setWindowTitle("モデルのダウンロード")
+        dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+        dialog.setMinimumDuration(500)  # Show after 500ms
+        dialog.setAutoClose(True)
+        dialog.setAutoReset(True)
+        
+        # Create a thread to download the model
+        thread = ModelPreloadThread([config], self)
+        
+        def on_progress(current, total, message):
+            dialog.setLabelText(message)
+        
+        def on_succeeded():
+            dialog.close()
+            self.statusBar().showMessage(f"モデルのダウンロードが完了しました: {model_id}", 3000)
+            self._logger.info("Model download succeeded: %s", model_id)
+        
+        def on_failed(failed_model_id, error_text):
+            dialog.close()
+            self._logger.error("Model download failed: %s - %s", failed_model_id, error_text)
+            self._show_error(
+                "モデルのダウンロードに失敗しました",
+                message=f"モデル: {failed_model_id}\n\n{error_text}"
+            )
+        
+        thread.progress.connect(on_progress)
+        thread.succeeded.connect(on_succeeded)
+        thread.failed.connect(on_failed)
+        thread.finished.connect(dialog.close)
+        thread.start()
+
     def _update_config_from_controls(self) -> None:
+        model_id = self.model_combo.currentData(Qt.ItemDataRole.UserRole)
         self.transcriber_config = replace(
             self.transcriber_config,
+            model_id=model_id if model_id else self.transcriber_config.model_id,
             use_fp32=self.fp32_checkbox.isChecked(),
             local_attention=self.local_attention_checkbox.isChecked(),
             local_attention_context_size=self.local_attention_spin.value(),
@@ -976,6 +1072,32 @@ class MainWindow(QMainWindow):
             "目安として、録音環境が静かでマイク性能も良ければ FP16 でも精度差は僅少です。"
             "雑音が多い・スペクトルが潰れやすい素材や方言など難素材なら FP32 で再評価してみてください。"
         )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+    def _show_model_help(self) -> None:
+        """Show help information for model selection."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("音声認識モデルについて")
+        msg.setIcon(QMessageBox.Icon.Information)
+        
+        current_model_id = self.model_combo.currentData(Qt.ItemDataRole.UserRole)
+        current_model_info = MODEL_REGISTRY.get(current_model_id, {})
+        
+        help_text = "利用可能なモデル:\n\n"
+        for model_id, info in MODEL_REGISTRY.items():
+            marker = "★ " if model_id == current_model_id else "　"
+            help_text += f"{marker}{info['name']}\n"
+            help_text += f"　 {info['description']}\n\n"
+        
+        help_text += (
+            "推奨:\n"
+            "・日本語の音声認識には Parakeet-TDT が最適化されています\n"
+            "・多言語対応や高精度が必要な場合は Whisper Large V3 を使用してください\n"
+            "・高速処理が必要な場合は Whisper Turbo (量子化版) が適しています"
+        )
+        
+        msg.setText(help_text)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
 
