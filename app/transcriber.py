@@ -15,6 +15,37 @@ from huggingface_hub.errors import (
 )
 from parakeet_mlx import AlignedResult, from_pretrained  # type: ignore[import]
 
+try:
+    import mlx_whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
+
+
+# Model registry with model type information
+MODEL_REGISTRY = {
+    "mlx-community/parakeet-tdt_ctc-0.6b-ja": {
+        "type": "parakeet",
+        "name": "Parakeet-TDT 0.6B (日本語)",
+        "description": "日本語音声認識に最適化されたモデル"
+    },
+    "mlx-community/whisper-large-v3-mlx": {
+        "type": "whisper",
+        "name": "Whisper Large V3",
+        "description": "多言語対応の高精度音声認識モデル"
+    },
+    "mlx-community/whisper-large-v3-turbo-q4": {
+        "type": "whisper",
+        "name": "Whisper Large V3 Turbo (量子化)",
+        "description": "高速で軽量な多言語音声認識モデル"
+    },
+    "mlx-community/Voxtral-Mini-3B-2507-bf16": {
+        "type": "whisper",
+        "name": "Voxtral Mini 3B",
+        "description": "多言語音声認識・理解モデル"
+    },
+}
+
 
 @dataclass(slots=True)
 class TranscriberConfig:
@@ -25,6 +56,10 @@ class TranscriberConfig:
     cache_dir: Optional[Path] = None
     chunk_duration: Optional[float] = 4.0
     chunk_overlap: float = 0.5
+    
+    def get_model_type(self) -> str:
+        """Get the model type (parakeet, whisper, etc.)"""
+        return MODEL_REGISTRY.get(self.model_id, {}).get("type", "parakeet")
 
 
 class ModelLoadError(RuntimeError):
@@ -89,9 +124,23 @@ class ParakeetModelManager:
 
 
 def transcribe_audio(audio_path: Path, config: TranscriberConfig) -> AlignedResult:
-    """Transcribe ``audio_path`` using the configured Parakeet model."""
+    """Transcribe ``audio_path`` using the configured model."""
     logger = logging.getLogger("mimitranscribe.transcriber")
-    logger.info("Transcription started: file=%s", audio_path)
+    logger.info("Transcription started: file=%s, model=%s", audio_path, config.model_id)
+    
+    model_type = config.get_model_type()
+    
+    if model_type == "whisper":
+        if not WHISPER_AVAILABLE:
+            raise ModelLoadError("Whisper モデルを使用するには mlx-whisper のインストールが必要です")
+        return _transcribe_with_whisper(audio_path, config)
+    else:
+        return _transcribe_with_parakeet(audio_path, config)
+
+
+def _transcribe_with_parakeet(audio_path: Path, config: TranscriberConfig) -> AlignedResult:
+    """Transcribe using Parakeet model."""
+    logger = logging.getLogger("mimitranscribe.transcriber")
     model = ParakeetModelManager.get_model(config)
     dtype = mx.float32 if config.use_fp32 else mx.bfloat16
     if config.chunk_duration is not None and config.chunk_duration > 0:
@@ -107,12 +156,49 @@ def transcribe_audio(audio_path: Path, config: TranscriberConfig) -> AlignedResu
     return result
 
 
+def _transcribe_with_whisper(audio_path: Path, config: TranscriberConfig) -> AlignedResult:
+    """Transcribe using Whisper model."""
+    logger = logging.getLogger("mimitranscribe.transcriber")
+    
+    # Whisper specific parameters
+    dtype = mx.float32 if config.use_fp32 else mx.bfloat16
+    
+    # Use mlx_whisper.transcribe
+    result = mlx_whisper.transcribe(
+        str(audio_path),
+        path_or_hf_repo=config.model_id,
+        verbose=False,
+        word_timestamps=False,
+    )
+    
+    # Convert whisper result to AlignedResult-like object
+    # Whisper returns a dict with 'text' and 'segments'
+    class WhisperResult:
+        def __init__(self, text):
+            self.text = text
+    
+    transcribed_text = result.get("text", "")
+    logger.info("Transcription finished: length=%d chars", len(transcribed_text))
+    return WhisperResult(transcribed_text)
+
+
 def ensure_model_downloaded(config: TranscriberConfig) -> None:
     """Ensure model files are present locally, downloading them if needed."""
     model_id = config.model_id
     logger = logging.getLogger("mimitranscribe.transcriber")
     logger.info("Ensuring model assets are available: %s", model_id)
+    
+    model_type = config.get_model_type()
+    
+    # For Whisper models, we rely on mlx_whisper's built-in download mechanism
+    # which happens during transcription, so we just verify the model type
+    if model_type == "whisper":
+        if not WHISPER_AVAILABLE:
+            raise ModelLoadError("Whisper モデルを使用するには mlx-whisper のインストールが必要です")
+        logger.info("Whisper model will be downloaded on first use: %s", model_id)
+        return
 
+    # For Parakeet models, check local path first
     model_path = Path(model_id).expanduser()
     if model_path.exists():
         required = [model_path / "config.json", model_path / "model.safetensors"]

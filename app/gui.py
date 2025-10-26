@@ -50,6 +50,7 @@ from PySide6.QtWidgets import (
 
 from .recorder import AudioRecorder
 from .transcriber import (
+    MODEL_REGISTRY,
     ModelLoadError,
     TranscriberConfig,
     ensure_model_downloaded,
@@ -303,6 +304,21 @@ class MainWindow(QMainWindow):
         self.device_refresh_button = QToolButton()
         self.device_refresh_button.setText("再読込")
         self.device_refresh_button.clicked.connect(self._refresh_devices)
+
+        # Model selection combo box
+        self.model_combo = QComboBox()
+        self.model_combo.currentIndexChanged.connect(self._on_model_changed)
+        for model_id, model_info in MODEL_REGISTRY.items():
+            self.model_combo.addItem(model_info["name"], model_id)
+        # Set current model
+        current_index = self.model_combo.findData(self.transcriber_config.model_id)
+        if current_index >= 0:
+            self.model_combo.setCurrentIndex(current_index)
+
+        self.model_help_button = QToolButton()
+        self.model_help_button.setText("?")
+        self.model_help_button.setFixedSize(24, 24)
+        self.model_help_button.clicked.connect(self._show_model_help)
 
         # Help buttons for parameters
         self.fp32_help_button = QToolButton()
@@ -627,6 +643,7 @@ class MainWindow(QMainWindow):
         config_layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
         )
+        config_layout.addRow("音声認識モデル", self._build_model_selector())
         config_layout.addRow("マイクデバイス", self._build_device_selector())
         config_layout.addRow("精度設定", self._build_fp32_control())
         config_layout.addRow("局所アテンション", self._build_local_attention_control())
@@ -681,6 +698,15 @@ class MainWindow(QMainWindow):
 
         container.setLayout(root_layout)
         self.setCentralWidget(container)
+
+    def _build_model_selector(self) -> QWidget:
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.model_combo, stretch=1)
+        layout.addWidget(self.model_help_button)
+        return wrapper
 
     def _build_device_selector(self) -> QWidget:
         wrapper = QWidget()
@@ -829,6 +855,7 @@ class MainWindow(QMainWindow):
 
     def _set_config_controls_enabled(self, enabled: bool) -> None:
         for widget in (
+            self.model_combo,
             self.device_combo,
             self.device_refresh_button,
             self.fp32_checkbox,
@@ -840,9 +867,27 @@ class MainWindow(QMainWindow):
     def _on_local_attention_toggled(self, checked: bool) -> None:
         self.local_attention_spin.setEnabled(checked)
 
+    def _on_model_changed(self, index: int) -> None:
+        """Handle model selection change."""
+        model_id = self.model_combo.itemData(index, Qt.ItemDataRole.UserRole)
+        if model_id and model_id != self.transcriber_config.model_id:
+            self._logger.info("Model changed to: %s", model_id)
+            self.transcriber_config = replace(
+                self.transcriber_config,
+                model_id=model_id,
+            )
+            # Update UI based on model capabilities
+            model_type = self.transcriber_config.get_model_type()
+            # Parakeet-specific settings don't apply to Whisper models
+            is_parakeet = model_type == "parakeet"
+            self.local_attention_checkbox.setEnabled(is_parakeet)
+            self.local_attention_spin.setEnabled(is_parakeet and self.local_attention_checkbox.isChecked())
+
     def _update_config_from_controls(self) -> None:
+        model_id = self.model_combo.currentData(Qt.ItemDataRole.UserRole)
         self.transcriber_config = replace(
             self.transcriber_config,
+            model_id=model_id if model_id else self.transcriber_config.model_id,
             use_fp32=self.fp32_checkbox.isChecked(),
             local_attention=self.local_attention_checkbox.isChecked(),
             local_attention_context_size=self.local_attention_spin.value(),
@@ -976,6 +1021,33 @@ class MainWindow(QMainWindow):
             "目安として、録音環境が静かでマイク性能も良ければ FP16 でも精度差は僅少です。"
             "雑音が多い・スペクトルが潰れやすい素材や方言など難素材なら FP32 で再評価してみてください。"
         )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+    def _show_model_help(self) -> None:
+        """Show help information for model selection."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("音声認識モデルについて")
+        msg.setIcon(QMessageBox.Icon.Information)
+        
+        current_model_id = self.model_combo.currentData(Qt.ItemDataRole.UserRole)
+        current_model_info = MODEL_REGISTRY.get(current_model_id, {})
+        
+        help_text = "利用可能なモデル:\n\n"
+        for model_id, info in MODEL_REGISTRY.items():
+            marker = "★ " if model_id == current_model_id else "　"
+            help_text += f"{marker}{info['name']}\n"
+            help_text += f"　 {info['description']}\n\n"
+        
+        help_text += (
+            "推奨:\n"
+            "・日本語の音声認識には Parakeet-TDT が最適化されています\n"
+            "・多言語対応や高精度が必要な場合は Whisper Large V3 を使用してください\n"
+            "・高速処理が必要な場合は Whisper Turbo (量子化版) が適しています\n"
+            "・Voxtral は音声認識に加えて音声理解機能も備えています"
+        )
+        
+        msg.setText(help_text)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
 
