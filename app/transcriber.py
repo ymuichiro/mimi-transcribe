@@ -129,12 +129,16 @@ def transcribe_audio(audio_path: Path, config: TranscriberConfig) -> AlignedResu
     logger.info("Transcription started: file=%s, model=%s", audio_path, config.model_id)
     
     model_type = config.get_model_type()
+    logger.info("DEBUG: Model type detected: %s", model_type)
+    logger.info("DEBUG: WHISPER_AVAILABLE: %s", WHISPER_AVAILABLE)
     
     if model_type == "whisper":
         if not WHISPER_AVAILABLE:
             raise ModelLoadError("Whisper モデルを使用するには mlx-whisper のインストールが必要です")
+        logger.info("DEBUG: Calling _transcribe_with_whisper")
         return _transcribe_with_whisper(audio_path, config)
     else:
+        logger.info("DEBUG: Calling _transcribe_with_parakeet")
         return _transcribe_with_parakeet(audio_path, config)
 
 
@@ -160,16 +164,28 @@ def _transcribe_with_whisper(audio_path: Path, config: TranscriberConfig) -> Ali
     """Transcribe using Whisper model."""
     logger = logging.getLogger("mimitranscribe.transcriber")
     
-    # Whisper specific parameters
-    dtype = mx.float32 if config.use_fp32 else mx.bfloat16
+    logger.info("DEBUG: Starting Whisper transcription")
+    logger.info("DEBUG: Model ID: %s", config.model_id)
+    logger.info("DEBUG: Audio path: %s", audio_path)
+    logger.info("DEBUG: Audio path exists: %s", audio_path.exists())
     
-    # Use mlx_whisper.transcribe
-    result = mlx_whisper.transcribe(
-        str(audio_path),
-        path_or_hf_repo=config.model_id,
-        verbose=False,
-        word_timestamps=False,
-    )
+    try:
+        # Use mlx_whisper.transcribe
+        # Note: mlx_whisper handles dtype internally, no need to pass it
+        logger.info("DEBUG: Calling mlx_whisper.transcribe...")
+        result = mlx_whisper.transcribe(
+            str(audio_path),
+            path_or_hf_repo=config.model_id,
+            verbose=True,  # Enable verbose output for debugging
+            word_timestamps=False,
+        )
+        logger.info("DEBUG: mlx_whisper.transcribe returned successfully")
+        logger.info("DEBUG: Result type: %s", type(result))
+        logger.info("DEBUG: Result keys: %s", result.keys() if isinstance(result, dict) else "not a dict")
+        
+    except Exception as exc:
+        logger.exception("DEBUG: Exception during mlx_whisper.transcribe")
+        raise ModelLoadError(f"Whisper transcription failed: {str(exc)}") from exc
     
     # Convert whisper result to AlignedResult-like object
     # Whisper returns a dict with 'text' and 'segments'
@@ -179,6 +195,7 @@ def _transcribe_with_whisper(audio_path: Path, config: TranscriberConfig) -> Ali
     
     transcribed_text = result.get("text", "")
     logger.info("Transcription finished: length=%d chars", len(transcribed_text))
+    logger.info("DEBUG: Returning WhisperResult with text: %s", transcribed_text[:100] if len(transcribed_text) > 100 else transcribed_text)
     return WhisperResult(transcribed_text)
 
 

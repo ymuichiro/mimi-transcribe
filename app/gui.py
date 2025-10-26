@@ -113,7 +113,12 @@ class TranscriptionThread(QThread):
     def run(self) -> None:  # noqa: D401 - Qt entry point
         try:
             self._logger.info("Thread started: file=%s", self.audio_path)
+            self._logger.info("DEBUG: Config model_id=%s", self.config.model_id)
+            self._logger.info("DEBUG: About to call transcribe_audio")
             result = transcribe_audio(self.audio_path, self.config)
+            self._logger.info("DEBUG: transcribe_audio returned")
+            self._logger.info("DEBUG: Result type: %s", type(result))
+            self._logger.info("DEBUG: Has text attribute: %s", hasattr(result, 'text'))
             self._logger.info("Thread completed successfully")
             self.completed.emit(result.text.strip())
         except ModelLoadError as exc:
