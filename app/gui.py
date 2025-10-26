@@ -1089,8 +1089,7 @@ class MainWindow(QMainWindow):
             "推奨:\n"
             "・日本語の音声認識には Parakeet-TDT が最適化されています\n"
             "・多言語対応や高精度が必要な場合は Whisper Large V3 を使用してください\n"
-            "・高速処理が必要な場合は Whisper Turbo (量子化版) が適しています\n"
-            "・Voxtral は書き起こし、翻訳、音声Q&Aなどの機能を備えています"
+            "・高速処理が必要な場合は Whisper Turbo (量子化版) が適しています"
         )
         
         msg.setText(help_text)
