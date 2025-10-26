@@ -750,13 +750,18 @@ class MainWindow(QMainWindow):
         return wrapper
 
     def _prepare_startup(self) -> None:
-        configs = [replace(self.transcriber_config)]
+        # Create configs for all models in the registry to preload them
+        configs = []
+        for model_id in MODEL_REGISTRY.keys():
+            config = replace(self.transcriber_config, model_id=model_id)
+            configs.append(config)
+        
         if not configs:
             self._logger.info("No models to preload; enabling controls immediately")
             self._finalize_initialization()
             return
 
-        self._logger.info("Preparing default model at startup")
+        self._logger.info("Preparing all models at startup: %d models", len(configs))
         self.status_label.setText("必要なモデルを準備しています…")
         self.statusBar().showMessage("モデルを準備しています…")
 
