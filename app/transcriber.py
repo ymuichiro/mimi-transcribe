@@ -39,13 +39,6 @@ MODEL_REGISTRY = {
         "name": "Whisper Large V3 Turbo (量子化)",
         "description": "高速で軽量な多言語音声認識モデル"
     },
-    # Note: Voxtral models require different libraries (vLLM/transformers)
-    # and are not compatible with mlx-whisper. Removed for now.
-    # "mlx-community/Voxtral-Mini-3B-2507-bf16": {
-    #     "type": "voxtral",
-    #     "name": "Voxtral Mini 3B",
-    #     "description": "書き起こし・翻訳・音声Q&A対応のマルチモーダルモデル"
-    # },
 }
 
 

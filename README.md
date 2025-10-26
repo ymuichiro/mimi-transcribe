@@ -32,7 +32,7 @@ This is a one-click desktop tool for **macOS** that handles everything from **mi
 - **Live Waveform Monitor**: Visualize microphone input levels in real time while recording so you can confirm that audio is being captured.
 - **Microphone Device Selection**: Available input devices are listed automatically and can be switched via a dropdown menu.
 - **Model Settings**: Easily toggle **FP32 mode** and **Local Attention** activation, or adjust the context window width via the GUI.
-- **Multiple Model Support**: Choose from multiple AI models including Parakeet-TDT (Japanese-optimized), Whisper Large V3 (multilingual), and Voxtral (audio understanding). Switch models directly from the UI.
+- **Multiple Model Support**: Choose from multiple AI models including Parakeet-TDT (Japanese-optimized) and Whisper Large V3 (multilingual). Switch models directly from the UI.
 - **Transcription History**: Multiple transcription results are saved within the session. You can re-display any result by simply selecting it from the history list. Results can be copied or deleted via the context menu.
 - **Export**: Generate text can be copied to the clipboard or saved as a file with a single click.
 
@@ -164,8 +164,6 @@ The application supports multiple AI models for speech recognition:
 - **Whisper Large V3** (`mlx-community/whisper-large-v3-mlx`) - High-accuracy multilingual model
 - **Whisper Large V3 Turbo** (`mlx-community/whisper-large-v3-turbo-q4`) - Fast, quantized version for efficient processing
 
-**Note:** Voxtral models are not currently supported as they require different libraries (vLLM/transformers) and are not compatible with the mlx-whisper interface used by this application.
-
 You can switch between models using the model selector in the GUI. For Japanese audio, Parakeet-TDT is recommended. For multilingual support or higher accuracy requirements, use Whisper models. The initial launch may take some time as the selected model is downloaded.
 
 ---
@@ -183,7 +181,7 @@ macOS 向けのデスクトップアプリとして、マイクからの録音�
 - **リアルタイム波形モニタ**: 録音中のマイク入力レベルを波形で表示し、音声が取り込まれていることを視覚的に確認できます。
 - **マイクデバイス選択**: 利用可能な入力デバイスを自動列挙し、ドロップダウンから切り替えられます。
 - **モデル設定**: FP32 モードやローカルアテンションの有効化／コンテキスト幅の調整を GUI で切り替え。
-- **複数モデル対応**: Parakeet-TDT（日本語最適化）、Whisper Large V3（多言語）、Voxtral（音声理解）など複数の AI モデルから選択可能。UI から直接モデルを切り替えられます。
+- **複数モデル対応**: Parakeet-TDT（日本語最適化）、Whisper Large V3（多言語）など複数の AI モデルから選択可能。UI から直接モデルを切り替えられます。
 - **書き起こし履歴**: セッション内に複数の書き起こし結果を保存し、選択するだけで結果を再表示。コンテキストメニューからコピーや削除が可能です。
 - **エクスポート**: 生成テキストをワンクリックでクリップボードにコピー、またはファイルとして保存できます。
 
@@ -306,7 +304,5 @@ PyInstaller を使ってアプリ本体と依存ライブラリ、`ffmpeg` バ�
 - **Parakeet-TDT 0.6B** (`mlx-community/parakeet-tdt_ctc-0.6b-ja`) - デフォルトモデル、日本語音声認識に最適化
 - **Whisper Large V3** (`mlx-community/whisper-large-v3-mlx`) - 高精度な多言語モデル
 - **Whisper Large V3 Turbo** (`mlx-community/whisper-large-v3-turbo-q4`) - 高速処理用の量子化版
-
-**注意:** Voxtral モデルは現在サポートされていません。これらのモデルは異なるライブラリ（vLLM/transformers）を必要とし、本アプリケーションが使用する mlx-whisper インターフェースと互換性がありません。
 
 GUI のモデル選択から自由に切り替えられます。日本語音声には Parakeet-TDT を推奨します。多言語対応や高精度が必要な場合は Whisper モデルをご利用ください。初回起動時は選択したモデルのダウンロードに時間がかかる場合があります。
